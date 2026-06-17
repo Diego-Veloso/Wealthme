@@ -826,7 +826,7 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
       <div class="two-col">
         <div class="field">
           <label>Amount</label>
-          <input type="number" id="entryAmount" step="0.01" placeholder="0.00">
+          <input type="number" id="entryAmount" step="0.01" placeholder="0.00 (use - for cashback/withdrawal)">
         </div>
         <div class="field">
           <label>Status</label>
@@ -1645,7 +1645,7 @@ document.getElementById('entrySaveBtn').addEventListener('click', ()=>{
     entry.date = date;
     entry.category = category;
     entry.subcategory = subcategory;
-    entry.amount = Math.abs(amount);
+    entry.amount = amount; // preserve sign: negative = cashback/withdrawal
     entry.status = status;
     entry.notes = notes;
     if(category === 'Expense'){
@@ -1660,7 +1660,7 @@ document.getElementById('entrySaveBtn').addEventListener('click', ()=>{
     const newEntry = {
       id: uid(),
       date, category, subcategory,
-      amount: Math.abs(amount),
+      amount: amount, // preserve sign: negative = cashback/withdrawal
       status, // defaults to Open via UI default
       notes
     };
@@ -1824,7 +1824,7 @@ document.getElementById('csvFileInput').addEventListener('change', (e)=>{
           date: row.date,
           category: row.category,
           subcategory: row.subcategory,
-          amount: Math.abs(parseFloat(row.amount)) || 0,
+          amount: parseFloat(row.amount) || 0, // preserve sign: negative = cashback/withdrawal
           status: (row.status === 'Closed') ? 'Closed' : 'Open',
           notes: row.notes || ''
         };
@@ -2361,8 +2361,7 @@ function renderDetail(){
 /* shared entry row renderer (used in detail + transactions + debts) */
 function renderEntryRow(e){
   const isExpense = e.category === 'Expense';
-  const sign = (e.category === 'Income') ? '+' : (e.category === 'Expense' || e.category === 'Investment') ? '-' : (e.amount>=0?'+':'');
-  const amtClass = (e.category==='Income' || (e.category==='Capital' && e.amount>=0)) ? 'pos' : 'neg';
+  const amt = Number(e.amount);
   const dotColor = CATEGORY_COLORS[e.category];
   const dateLabel = parseLocalDate(e.date).toLocaleDateString(undefined,{month:'short', day:'numeric'});
   let metaText = `${dateLabel} · ${e.category}`;
@@ -2370,11 +2369,30 @@ function renderEntryRow(e){
   if(isExpense && e.account){ metaText += ` · ${e.account}`; }
   if(e.notes){ metaText += ` · ${e.notes}`; }
 
-  let displayAmt;
-  if(e.category === 'Capital'){
-    displayAmt = (e.amount>=0?'+':'') + fmtMoney(e.amount).replace('-','-');
+  let displayAmt, amtClass;
+  if(e.category === 'Income'){
+    displayAmt = (amt >= 0 ? '+' : '') + fmtMoney(amt);
+    amtClass = amt >= 0 ? 'pos' : 'neg';
+  } else if(e.category === 'Expense'){
+    if(amt >= 0){
+      displayAmt = '-' + fmtMoney(amt);
+      amtClass = 'neg';
+    } else {
+      displayAmt = '+' + fmtMoney(Math.abs(amt)) + ' ↩';
+      amtClass = 'pos';
+    }
+  } else if(e.category === 'Investment'){
+    if(amt >= 0){
+      displayAmt = '-' + fmtMoney(amt);
+      amtClass = 'neg';
+    } else {
+      displayAmt = '+' + fmtMoney(Math.abs(amt)) + ' ↩';
+      amtClass = 'pos';
+    }
   } else {
-    displayAmt = sign + fmtMoney(Math.abs(e.amount));
+    // Capital
+    displayAmt = (amt >= 0 ? '+' : '') + fmtMoney(amt);
+    amtClass = amt >= 0 ? 'pos' : 'neg';
   }
 
   return `

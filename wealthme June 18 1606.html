@@ -1,0 +1,2809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Wealth.Me</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F1B2D;
+  --cream:#F7F4EF;
+  --card:#FFFFFF;
+  --sage:#3E7C59;
+  --sage-light:#E7F0EA;
+  --terracotta:#C1583F;
+  --terracotta-light:#FBEAE5;
+  --gold:#D4A24E;
+  --gold-light:#FBF1DF;
+  --slate:#5C6B7A;
+  --slate-light:#E7EAED;
+  --line:#E3DFD6;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--cream);
+  color:var(--navy);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+#app{
+  max-width:520px;
+  margin:0 auto;
+  min-height:100vh;
+  background:var(--cream);
+  display:flex;
+  flex-direction:column;
+  position:relative;
+}
+
+/* ===== Header / Top bar ===== */
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:18px 20px 12px;
+  position:sticky;
+  top:0;
+  background:var(--cream);
+  z-index:50;
+}
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.logo-mark{
+  width:36px;height:36px;
+  border-radius:10px;
+  background:var(--navy);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+  flex-shrink:0;
+}
+.logo-mark img{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
+}
+.logo-text{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:19px;
+  letter-spacing:-0.3px;
+}
+.logo-text span{color:var(--sage);}
+.icon-btn{
+  width:38px;height:38px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--card);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  color:var(--navy);
+  transition:background .15s;
+}
+.icon-btn:hover{background:var(--slate-light);}
+.icon-btn:active{transform:scale(0.96);}
+
+/* ===== Main content area ===== */
+main{
+  flex:1;
+  padding:4px 16px 100px;
+}
+.view{display:none;}
+.view.active{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ===== Month nav ===== */
+.month-nav{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  margin:8px 0 18px;
+}
+.month-nav button{
+  width:36px;height:36px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:var(--card);
+  font-size:16px;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--navy);
+}
+.month-nav button:active{transform:scale(0.94);}
+.month-nav .label{
+  font-family:'Fraunces',serif;
+  font-size:19px;
+  font-weight:600;
+  min-width:170px;
+  text-align:center;
+}
+
+/* ===== Balance hero ===== */
+.balance-hero{
+  text-align:center;
+  margin-bottom:18px;
+}
+.balance-hero .eyebrow{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  color:var(--slate);
+  font-weight:600;
+}
+.balance-hero .figure{
+  font-family:'Fraunces',serif;
+  font-size:44px;
+  font-weight:600;
+  letter-spacing:-1px;
+  margin:4px 0 6px;
+  line-height:1.1;
+}
+.balance-hero .figure.negative{color:var(--terracotta);}
+.balance-hero .underline{
+  width:64px;height:2px;background:var(--gold);margin:0 auto;border-radius:2px;
+}
+.balance-hero .sub{
+  font-size:13px;color:var(--slate);margin-top:8px;
+}
+
+/* ===== Cards / grid ===== */
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  border:1px solid var(--line);
+  padding:16px;
+  margin-bottom:14px;
+}
+.summary-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  margin-bottom:14px;
+}
+.summary-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:12px 14px;
+}
+.summary-card .label{
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--slate);
+  font-weight:600;
+  margin-bottom:4px;
+}
+.summary-card .value{
+  font-family:'Fraunces',serif;
+  font-size:20px;
+  font-weight:600;
+  letter-spacing:-0.3px;
+}
+.summary-card .value.pos{color:var(--sage);}
+.summary-card .value.neg{color:var(--terracotta);}
+.summary-card .value.gold{color:var(--gold);}
+
+.card-title{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:17px;
+  margin:0 0 12px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.chart-wrap{position:relative;height:200px;}
+.donut-wrap{position:relative;height:220px;display:flex;align-items:center;justify-content:center;}
+
+/* ===== Segmented control / pills ===== */
+/* ===== Search bar ===== */
+.search-bar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 12px;
+  margin-bottom:12px;
+  color:var(--slate);
+}
+.search-bar input{
+  flex:1;
+  border:none;
+  background:transparent;
+  font-size:14px;
+  font-family:'Inter',sans-serif;
+  color:var(--navy);
+  outline:none;
+}
+.search-bar input::placeholder{color:var(--slate);}
+.search-clear{
+  border:none;background:var(--slate-light);
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--slate);
+  flex-shrink:0;
+}
+
+.segmented{
+  display:flex;
+  background:var(--slate-light);
+  border-radius:10px;
+  padding:3px;
+  gap:2px;
+}
+.segmented button{
+  flex:1;
+  border:none;
+  background:transparent;
+  padding:7px 8px;
+  font-size:13px;
+  font-weight:600;
+  font-family:'Inter',sans-serif;
+  color:var(--slate);
+  border-radius:8px;
+  cursor:pointer;
+  transition:all .15s;
+}
+.segmented button.active{
+  background:var(--card);
+  color:var(--navy);
+  box-shadow:0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ===== Lists ===== */
+.entry-list{list-style:none;margin:0;padding:0;}
+.entry-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:11px 2px;
+  border-bottom:1px solid var(--line);
+  cursor:pointer;
+}
+.entry-row:last-child{border-bottom:none;}
+.entry-row:active{background:var(--slate-light);}
+.entry-main{display:flex;align-items:center;gap:10px;}
+.entry-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.entry-info .sub{font-weight:600;font-size:14px;}
+.entry-info .meta{font-size:12px;color:var(--slate);margin-top:2px;}
+.entry-amt{font-weight:700;font-size:14px;font-family:'Fraunces',serif;}
+.entry-amt.pos{color:var(--sage);}
+.entry-amt.neg{color:var(--terracotta);}
+.status-badge{
+  font-size:10px;
+  text-transform:uppercase;
+  font-weight:700;
+  letter-spacing:0.5px;
+  padding:2px 7px;
+  border-radius:6px;
+  margin-left:8px;
+}
+.status-badge.open{background:var(--gold-light);color:var(--gold);}
+.status-badge.closed{background:var(--sage-light);color:var(--sage);}
+
+.group-header{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:15px;
+  margin:18px 0 6px;
+  color:var(--navy);
+}
+.group-header:first-child{margin-top:0;}
+
+/* ===== Donut breakdown rows ===== */
+.breakdown-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 2px;
+  border-bottom:1px solid var(--line);
+  cursor:pointer;
+}
+.breakdown-row:last-child{border-bottom:none;}
+.breakdown-left{display:flex;align-items:center;gap:10px;}
+.breakdown-swatch{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.breakdown-name{font-weight:600;font-size:14px;}
+.breakdown-right{text-align:right;}
+.breakdown-amt{font-weight:700;font-size:14px;font-family:'Fraunces',serif;}
+.breakdown-pct{font-size:11px;color:var(--slate);}
+
+/* ===== Bottom nav ===== */
+.bottomnav{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  max-width:520px;
+  margin:0 auto;
+  background:var(--card);
+  border-top:1px solid var(--line);
+  display:flex;
+  padding:8px 6px calc(env(safe-area-inset-bottom,0) + 8px);
+  z-index:60;
+}
+.navtab{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  padding:6px 0;
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  color:var(--slate);
+  font-family:'Inter',sans-serif;
+  font-size:11px;
+  font-weight:600;
+}
+.navtab.active{color:var(--navy);}
+.navtab svg{width:21px;height:21px;}
+
+/* ===== Buttons ===== */
+.btn{
+  border:none;
+  border-radius:10px;
+  padding:12px 18px;
+  font-weight:700;
+  font-size:14px;
+  cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.btn-primary{background:var(--navy);color:var(--cream);}
+.btn-primary:active{opacity:0.85;}
+.btn-danger{background:var(--terracotta-light);color:var(--terracotta);}
+.btn-secondary{background:var(--slate-light);color:var(--navy);}
+.btn-block{width:100%;}
+.btn-row{display:flex;gap:10px;margin-top:18px;}
+.fab{
+  position:fixed;
+  right:calc(50% - 260px + 18px);
+  bottom:88px;
+  width:54px;height:54px;
+  border-radius:50%;
+  background:var(--navy);
+  color:var(--cream);
+  border:none;
+  font-size:26px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(15,27,45,0.28);
+  z-index:55;
+}
+@media (max-width:520px){
+  .fab{right:18px;}
+}
+.fab:active{transform:scale(0.95);}
+
+/* ===== Forms / Modal ===== */
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(15,27,45,0.45);
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  z-index:100;
+}
+#confirmModalOverlay{
+  z-index:150;
+  align-items:center;
+}
+#csvTextModalOverlay{
+  z-index:140;
+}
+.modal-overlay.active{display:flex;}
+.modal{
+  background:var(--cream);
+  width:100%;
+  max-width:520px;
+  border-radius:20px 20px 0 0;
+  padding:18px 20px calc(env(safe-area-inset-bottom,0) + 20px);
+  max-height:88vh;
+  overflow-y:auto;
+  animation:slideUp .25s ease;
+}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;
+}
+.modal-header h3{
+  font-family:'Fraunces',serif;font-size:19px;margin:0;font-weight:600;
+}
+.modal-header .icon-btn{width:32px;height:32px;}
+
+.field{margin-bottom:13px;}
+.field label{
+  display:block;font-size:12px;font-weight:600;color:var(--slate);
+  text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;
+}
+.field input,.field select,.field textarea{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:11px 12px;
+  font-size:15px;
+  font-family:'Inter',sans-serif;
+  background:var(--card);
+  color:var(--navy);
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:2px solid var(--navy);outline-offset:1px;
+}
+.field textarea{resize:vertical;min-height:60px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* ===== Progress bar ===== */
+.progress-track{
+  height:10px;border-radius:6px;background:var(--slate-light);overflow:hidden;margin:8px 0;
+}
+.progress-fill{
+  height:100%;background:var(--gold);border-radius:6px;transition:width .4s ease;
+}
+
+/* ===== Misc ===== */
+.muted{color:var(--slate);font-size:13px;}
+.section-title{
+  font-family:'Fraunces',serif;font-weight:600;font-size:16px;margin:20px 0 8px;
+}
+.empty-state{
+  text-align:center;padding:40px 20px;color:var(--slate);
+}
+.empty-state .big{font-size:36px;margin-bottom:8px;}
+.csv-row{display:flex;gap:10px;margin-top:10px;}
+.csv-row .btn{flex:1;font-size:13px;padding:10px;}
+.hidden-input{display:none;}
+/* ===== Toggle switch ===== */
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:10px;padding:11px 12px;height:46px;
+}
+.toggle-label{font-size:14px;font-weight:600;color:var(--navy);}
+.toggle-switch{position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-thumb{
+  position:absolute;inset:0;
+  background:var(--slate-light);border-radius:26px;
+  cursor:pointer;transition:background .2s;
+}
+.toggle-thumb::before{
+  content:'';position:absolute;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.2);
+  left:3px;top:3px;transition:transform .2s;
+}
+.toggle-switch input:checked + .toggle-thumb{background:var(--sage);}
+.toggle-switch input:checked + .toggle-thumb::before{transform:translateX(18px);}
+.cat-tag{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  padding:3px 8px;border-radius:7px;
+}
+.cat-tag.Income{background:var(--sage-light);color:var(--sage);}
+.cat-tag.Expense{background:var(--terracotta-light);color:var(--terracotta);}
+.cat-tag.Investment{background:var(--gold-light);color:var(--gold);}
+.cat-tag.Capital{background:var(--slate-light);color:var(--slate);}
+.toast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+  background:var(--navy);color:var(--cream);
+  padding:10px 18px;border-radius:30px;font-size:13px;font-weight:600;
+  z-index:200;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+.percent-note{font-size:12px;color:var(--slate);margin-top:-4px;margin-bottom:10px;}
+.year-progress-card .pct-label{
+  display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:2px;
+}
+/* ===== Debt accounts manager ===== */
+.debt-type-group{
+  margin-bottom:14px;
+}
+.debt-type-group .type-label{
+  font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--slate);margin-bottom:8px;
+}
+.account-chip-list{
+  display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;
+}
+.account-chip{
+  display:flex;align-items:center;gap:6px;
+  background:var(--slate-light);
+  border-radius:20px;
+  padding:6px 8px 6px 12px;
+  font-size:13px;font-weight:600;
+}
+.account-chip button{
+  border:none;background:var(--card);
+  width:18px;height:18px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--terracotta);font-size:13px;line-height:1;
+  padding:0;
+}
+.account-add-row{display:flex;gap:8px;}
+.account-add-row input{
+  flex:1;border:1px solid var(--line);border-radius:10px;
+  padding:9px 12px;font-size:13px;font-family:'Inter',sans-serif;background:var(--card);color:var(--navy);
+}
+.account-add-row input:focus{outline:2px solid var(--navy);outline-offset:1px;}
+.account-add-row button{
+  border:none;background:var(--navy);color:var(--cream);
+  border-radius:10px;padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer;
+}
+/* ===== Subcategory manager (reuses chip styling) ===== */
+.account-chip .edit-btn{
+  color:var(--slate);
+}
+.account-chip .rename-input{
+  border:1px solid var(--line);border-radius:8px;
+  padding:4px 8px;font-size:13px;font-family:'Inter',sans-serif;
+  background:var(--card);color:var(--navy);
+  width:120px;
+}
+.account-chip .rename-input:focus{outline:2px solid var(--navy);outline-offset:1px;}
+table.breakdown-table{width:100%;border-collapse:collapse;font-size:13px;}
+table.breakdown-table th{
+  text-align:right;font-size:10px;text-transform:uppercase;color:var(--slate);
+  padding:6px 4px;border-bottom:1px solid var(--line);letter-spacing:.5px;
+}
+table.breakdown-table th:first-child,table.breakdown-table td:first-child{text-align:left;}
+table.breakdown-table td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:right;font-weight:600;}
+table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== Top Bar ===== -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-mark"><img src="data:image/png;base64,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" alt="Wealth.Me logo"></div>
+      <div class="logo-text">Wealth<span>.</span>Me</div>
+    </div>
+    <button class="icon-btn" id="settingsBtn" title="Settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+
+  <main id="main">
+
+    <!-- ============ HOME VIEW ============ -->
+    <section class="view active" id="view-home">
+      <div class="month-nav">
+        <button id="homePrev">&#8249;</button>
+        <div class="label" id="homeMonthLabel">June 2026</div>
+        <button id="homeNext">&#8250;</button>
+      </div>
+
+      <div class="balance-hero">
+        <div class="eyebrow">Balance (Cashflow)</div>
+        <div class="figure" id="homeBalanceFig">$0</div>
+        <div class="underline"></div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="label">Gross Income</div>
+          <div class="value pos" id="sumGross">$0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Net Income</div>
+          <div class="value" id="sumNet">$0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Expenses</div>
+          <div class="value neg" id="sumExpenses">$0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Investment</div>
+          <div class="value gold" id="sumInvestment">$0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Taxes</div>
+          <div class="value" id="sumTaxes">$0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Projected Balance</div>
+          <div class="value" id="sumBalance">$0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Daily Cashflow</div>
+        <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Breakdown</span>
+          <div class="segmented" id="donutSeg" style="width:auto;">
+            <button class="active" data-cat="Income">Income</button>
+            <button data-cat="Expense">Expense</button>
+            <button data-cat="Investment">Investment</button>
+          </div>
+        </div>
+        <div class="donut-wrap"><canvas id="donutChart"></canvas></div>
+        <div id="donutBreakdownList"></div>
+      </div>
+    </section>
+
+    <!-- ============ SUBCATEGORY DETAIL VIEW ============ -->
+    <section class="view" id="view-detail">
+      <div class="month-nav" style="justify-content:flex-start;gap:10px;">
+        <button id="detailBack">&#8249;</button>
+        <div class="label" style="text-align:left;min-width:auto;">Detail</div>
+      </div>
+      <div class="card">
+        <div class="two-col">
+          <div class="field" style="margin-bottom:0;">
+            <label>Category</label>
+            <select id="detailCategorySel"></select>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Subcategory</label>
+            <select id="detailSubcatSel"></select>
+          </div>
+        </div>
+      </div>
+      <div id="detailLists"></div>
+    </section>
+
+    <!-- ============ TRANSACTIONS VIEW ============ -->
+    <section class="view" id="view-transactions">
+      <h2 class="card-title" style="margin:10px 0 14px;">Transactions</h2>
+      <div class="search-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="txSearchInput" placeholder="Search by category, subcategory, notes, account...">
+        <button id="txSearchClear" class="search-clear" style="display:none;" title="Clear search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Period quick-select -->
+      <div class="segmented" id="txPeriodSeg" style="margin-bottom:8px;">
+        <button data-period="all">All</button>
+        <button class="active" data-period="thismonth">This Month</button>
+        <button data-period="lastmonth">Last Month</button>
+        <button data-period="thisyear">This Year</button>
+        <button data-period="custom">Custom</button>
+      </div>
+
+      <!-- Custom date range (hidden unless "Custom" selected) -->
+      <div id="txDateRangeRow" style="display:none;gap:8px;margin-bottom:8px;" class="two-col">
+        <div class="field" style="margin-bottom:0;">
+          <label>From</label>
+          <input type="date" id="txDateFrom">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>To</label>
+          <input type="date" id="txDateTo">
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:0;">
+        <div class="segmented" id="txFilterSeg" style="flex:1;">
+          <button data-filter="Both">All</button>
+          <button class="active" data-filter="Open">Open</button>
+          <button data-filter="Closed">Closed</button>
+        </div>
+        <button class="icon-btn" id="txSortBtn" title="Sort order" style="flex-shrink:0;">
+          <svg id="txSortIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+        </button>
+      </div>
+      <div id="txList" style="margin-top:14px;"></div>
+    </section>
+
+    <!-- ============ DEBTS VIEW ============ -->
+    <section class="view" id="view-debts">
+      <h2 class="card-title" style="margin:10px 0 14px;">Debts</h2>
+      <div class="search-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="debtSearchInput" placeholder="Search by subcategory, account, notes...">
+        <button id="debtSearchClear" class="search-clear" style="display:none;" title="Clear search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="segmented" id="debtFilterSeg">
+        <button data-filter="Both">All</button>
+        <button class="active" data-filter="Open">Open</button>
+        <button data-filter="Closed">Closed</button>
+      </div>
+      <div class="segmented" id="debtTypeFilterSeg" style="margin-top:8px;flex-wrap:wrap;">
+        <button class="active" data-type="All" style="font-size:11px;min-width:64px;">All Types</button>
+        <button data-type="Credit Card" style="font-size:11px;min-width:64px;">Credit Card</button>
+        <button data-type="Financing" style="font-size:11px;min-width:64px;">Financing</button>
+        <button data-type="Mortgage" style="font-size:11px;min-width:64px;">Mortgage</button>
+        <button data-type="Other" style="font-size:11px;min-width:64px;">Other</button>
+      </div>
+      <div id="debtList" style="margin-top:14px;"></div>
+    </section>
+
+    <!-- ============ MONEY VIEW ============ -->
+    <section class="view" id="view-money">
+      <div class="month-nav">
+        <button id="moneyPrev">&#8249;</button>
+        <div class="label" id="moneyLabel">June 2026</div>
+        <button id="moneyNext">&#8250;</button>
+      </div>
+
+      <!-- Summary cards -->
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="label">Invested</div>
+          <div class="value gold" id="moneyCardInvested">$0</div>
+          <div class="muted" style="font-size:11px;margin-top:2px;">Closed entries</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Planned</div>
+          <div class="value" id="moneyCardPlanned">$0</div>
+          <div class="muted" style="font-size:11px;margin-top:2px;">Open + Closed</div>
+        </div>
+        <div class="summary-card" style="grid-column:span 2;">
+          <div class="label">Cumulative Invested (all time to month)</div>
+          <div class="value gold" id="moneyCardCumulative">$0</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Capital (all time)</div>
+          <div class="value" id="moneyCardCapital">$0</div>
+          <div class="muted" style="font-size:11px;margin-top:2px;">Gains / Losses</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Net Position</div>
+          <div class="value" id="moneyCardNetPosition">$0</div>
+          <div id="moneyCardVariation" style="font-size:12px;font-weight:700;margin-top:2px;"></div>
+        </div>
+      </div>
+
+      <!-- Progress bar: invested vs planned -->
+      <div class="card" style="padding:14px 16px 12px;">
+        <div class="pct-label" style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px;">
+          <span id="moneyProgressLabel">0% of plan complete</span>
+          <span id="moneyProgressNums" class="muted"></span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="moneyProgressFill" style="width:0%"></div></div>
+      </div>
+
+      <!-- Subcategory breakdown -->
+      <div class="card">
+        <div class="card-title">By Investment</div>
+        <div id="moneyBreakdown"></div>
+      </div>
+
+      <!-- 12-month cumulative projection chart -->
+      <div class="card">
+        <div class="card-title">
+          <span>12-Month Projection</span>
+          <span class="muted" style="font-size:12px;font-family:'Inter',sans-serif;font-weight:500;">cumulative planned</span>
+        </div>
+        <div class="chart-wrap" style="height:220px;"><canvas id="moneyLineChart"></canvas></div>
+      </div>
+
+      <!-- All-time breakdown by subcategory -->
+      <div class="card">
+        <div class="card-title">All-Time by Investment</div>
+        <div id="moneyAllTimeBreakdown"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== Floating Action Button ===== -->
+  <button class="fab" id="addFab" title="Add entry">+</button>
+
+  <!-- ===== Bottom Navigation ===== -->
+  <nav class="bottomnav">
+    <button class="navtab active" data-view="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Home
+    </button>
+    <button class="navtab" data-view="transactions">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Transactions
+    </button>
+    <button class="navtab" data-view="debts">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Debts
+    </button>
+    <button class="navtab" data-view="money">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Money
+    </button>
+  </nav>
+
+  <!-- ===== Entry Edit/Add Modal ===== -->
+  <div class="modal-overlay" id="entryModalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="entryModalTitle">Add Entry</h3>
+        <button class="icon-btn" id="entryModalClose">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <input type="hidden" id="entryId">
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="entryDate">
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Category</label>
+          <select id="entryCategory"></select>
+        </div>
+        <div class="field">
+          <label>Subcategory</label>
+          <select id="entrySubcategory"></select>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Amount</label>
+          <input type="number" id="entryAmount" step="0.01" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <div class="toggle-row">
+            <span class="toggle-label" id="entryStatusLabel">Open</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="entryStatusToggle">
+              <span class="toggle-thumb"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <textarea id="entryNotes" placeholder="Add a note..."></textarea>
+      </div>
+      <div class="field" id="entryTypeField" style="display:none;">
+        <label>Type</label>
+        <select id="entryType">
+          <option>Credit Card</option>
+          <option>Financing</option>
+          <option>Mortgage</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field" id="entryAccountField" style="display:none;">
+        <label>Account (optional)</label>
+        <select id="entryAccount"></select>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-danger" id="entryDeleteBtn" style="display:none;">Delete</button>
+        <button class="btn btn-primary btn-block" id="entrySaveBtn">Save Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Settings / CSV Modal ===== -->
+  <div class="modal-overlay" id="settingsModalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Management</h3>
+        <button class="icon-btn" id="settingsModalClose">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="section-title">Subcategories</div>
+      <p class="muted">Add, rename, or remove subcategories for each category. Renaming or removing updates existing entries.</p>
+      <div class="segmented" id="subcatCategorySeg">
+        <button class="active" data-cat="Income">Income</button>
+        <button data-cat="Expense">Expense</button>
+        <button data-cat="Investment">Investment</button>
+        <button data-cat="Capital">Capital</button>
+      </div>
+      <div id="subcategoryManager" style="margin-top:10px;"></div>
+
+      <div class="section-title">Debt Accounts</div>
+      <p class="muted">Add specific accounts under each debt type (e.g. card names) so you can tag entries with them.</p>
+      <div id="debtAccountsManager"></div>
+
+      <div class="section-title">Data</div>
+      <p class="muted">Import a CSV of entries, export your current data, or download a blank template to fill in.</p>
+      <div class="csv-row">
+        <button class="btn btn-secondary" id="downloadTemplateBtn">Download Template</button>
+        <button class="btn btn-secondary" id="exportCsvBtn">Export CSV</button>
+      </div>
+      <div class="csv-row">
+        <button class="btn btn-primary" id="importCsvBtn" style="flex:1;">Import CSV</button>
+      </div>
+      <input type="file" id="csvFileInput" class="hidden-input" accept=".csv">
+
+      <div class="section-title">Reset</div>
+      <div class="csv-row">
+        <button class="btn btn-danger" id="emptyDataBtn" style="flex:1;">Empty All Data</button>
+        <button class="btn btn-secondary" id="resetDataBtn" style="flex:1;">Reset to Sample Data</button>
+      </div>
+      <p class="muted" style="text-align:center;margin-top:16px;font-size:11px;">Wealth.Me · Version 1.0</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- ===== Custom Confirm Modal (replaces window.confirm, which can be blocked in sandboxed iframes) ===== -->
+  <div class="modal-overlay" id="confirmModalOverlay">
+    <div class="modal" style="max-width:440px;">
+      <div class="modal-header">
+        <h3 id="confirmModalTitle">Are you sure?</h3>
+      </div>
+      <p class="muted" id="confirmModalMessage"></p>
+      <div class="btn-row">
+        <button class="btn btn-secondary btn-block" id="confirmModalCancel">Cancel</button>
+        <button class="btn btn-danger btn-block" id="confirmModalConfirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CSV Export / Text Modal (fallback for blocked file downloads) ===== -->
+  <div class="modal-overlay" id="csvTextModalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="csvTextModalTitle">Export CSV</h3>
+        <button class="icon-btn" id="csvTextModalClose">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <p class="muted">If the download button doesn't work, copy the text below and save it as a <code>.csv</code> file, or open it in a new tab and use your browser's save option.</p>
+      <div class="field">
+        <textarea id="csvTextArea" readonly style="min-height:160px;font-family:monospace;font-size:12px;"></textarea>
+      </div>
+      <div class="csv-row">
+        <button class="btn btn-secondary" id="csvTextCopyBtn" style="flex:1;">Copy Text</button>
+        <button class="btn btn-secondary" id="csvTextOpenBtn" style="flex:1;">Open in New Tab</button>
+      </div>
+      <div class="csv-row" style="margin-top:6px;">
+        <button class="btn btn-primary" id="csvTextDownloadBtn" style="flex:1;">Try Download Again</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   WEALTH.ME — APPLICATION SCRIPT
+   ========================================================= */
+
+/* ---------- CATEGORY / SUBCATEGORY MAP ---------- */
+const CATEGORY_MAP = {
+  Income: ["Bonus & Commissions","Borrowing","Child Support","Interests & Dividends","Other Incomes","Salary & Paycheck","Tax Return"],
+  Expense: ["Beauty","Transportation","Children","Communication","Education","Entertainment","Family","Groceries","Health","Home","Life Insurance","Meal & Drinks","Other","Shopping","Taxes","Travel","Work"],
+  Investment: ["Cash","Crypto","Emergency","Retirement","Bonds & Stocks","Other"],
+  Capital: ["Cash","Crypto","Emergency","Retirement","Bonds & Stocks","Other"]
+};
+const CATEGORY_COLORS = {
+  Income:"#3E7C59", Expense:"#C1583F", Investment:"#D4A24E", Capital:"#5C6B7A"
+};
+const PALETTE = ["#3E7C59","#D4A24E","#C1583F","#5C6B7A","#7A9E7E","#E0B968","#D98C73","#8FA3B0","#2F5C46","#A6783A","#9C4632","#3E4E5E"];
+const DEBT_TYPES = ["Credit Card","Financing","Mortgage","Other"];
+
+/* ---------- DEBT ACCOUNTS (user-defined sub-options per type) ---------- */
+let DEBT_ACCOUNTS = {
+  "Credit Card": [],
+  "Financing": [],
+  "Mortgage": [],
+  "Other": []
+};
+
+/* ---------- SETTINGS (percentages) ---------- */
+let SETTINGS = {
+  taxRate: 0,      // % of Gross Income added to Taxes
+  netAdj: 0,       // % of Gross Income added back for Net Income
+  expAdj: 0,       // % of Net Income added to Expenses
+  invAdj: 0,       // % of Net Income added to Investment
+  balAdj: 0        // % of Net Income added to Balance
+};
+
+/* ---------- STATE ---------- */
+let entries = [];
+let nextId = 1;
+
+let homeDate = new Date(2026, 5, 1); // June 2026 reference "today"
+let moneyMonthDate = new Date(homeDate);
+
+let donutCategory = "Income";
+let txFilter = "Open";
+let txSearchQuery = "";
+let txSortAsc = true; // true = oldest first, false = newest first
+let txPeriod = "thismonth";   // all | thismonth | lastmonth | thisyear | custom
+let txDateFrom = "";    // YYYY-MM-DD, used when txPeriod === "custom"
+let txDateTo = "";      // YYYY-MM-DD, used when txPeriod === "custom"
+let debtFilter = "Open";
+let debtTypeFilter = "All";
+let debtSearchQuery = "";
+
+let detailCategory = "Income";
+let detailSubcategory = CATEGORY_MAP.Income[0];
+
+let lineChartInstance = null;
+let donutChartInstance = null;
+
+/* ---------- UTILITIES ---------- */
+function fmtMoney(n){
+  const sign = n < 0 ? "-" : "";
+  return sign + "$" + Math.abs(n).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtMonthYear(d){
+  return d.toLocaleString(undefined,{month:'long',year:'numeric'});
+}
+function uid(){ return nextId++; }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+// Parse a "YYYY-MM-DD" date string as a LOCAL date (avoids the off-by-one-day
+// bug that occurs when "YYYY-MM-DD" is parsed as UTC midnight and then read
+// back using local getters in timezones behind UTC).
+function parseLocalDate(dateStr){
+  const parts = String(dateStr).split('-');
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  return new Date(y, m, d);
+}
+// Format a Date object as "YYYY-MM-DD" using LOCAL date components (avoids
+// toISOString(), which converts to UTC and can shift the date by a day).
+function formatLocalDate(date){
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const d = String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function isSameMonth(dateStr, refDate){
+  const d = parseLocalDate(dateStr);
+  return d.getFullYear() === refDate.getFullYear() && d.getMonth() === refDate.getMonth();
+}
+function isSameYear(dateStr, refDate){
+  const d = parseLocalDate(dateStr);
+  return d.getFullYear() === refDate.getFullYear();
+}
+function isBeforeOrInMonth(dateStr, refDate){
+  const d = parseLocalDate(dateStr);
+  const ref = new Date(refDate.getFullYear(), refDate.getMonth()+1, 0); // end of ref month
+  return d <= ref;
+}
+function isBeforeOrInYear(dateStr, refDate){
+  const d = parseLocalDate(dateStr);
+  return d.getFullYear() <= refDate.getFullYear();
+}
+
+/* ---------- PERSISTENCE ---------- */
+function saveState(){
+  invalidateFinancialsCache();
+  try{
+    localStorage.setItem('wealthme_entries', JSON.stringify(entries));
+    localStorage.setItem('wealthme_nextid', String(nextId));
+    localStorage.setItem('wealthme_settings', JSON.stringify(SETTINGS));
+    localStorage.setItem('wealthme_debtaccounts', JSON.stringify(DEBT_ACCOUNTS));
+    localStorage.setItem('wealthme_categorymap', JSON.stringify(CATEGORY_MAP));
+  }catch(e){ /* ignore */ }
+}
+function loadState(){
+  try{
+    const e = localStorage.getItem('wealthme_entries');
+    const n = localStorage.getItem('wealthme_nextid');
+    const s = localStorage.getItem('wealthme_settings');
+    const da = localStorage.getItem('wealthme_debtaccounts');
+    const cm = localStorage.getItem('wealthme_categorymap');
+    if(e){ entries = JSON.parse(e); }
+    if(n){ nextId = parseInt(n,10); }
+    if(s){ SETTINGS = Object.assign(SETTINGS, JSON.parse(s)); }
+    if(da){
+      const parsed = JSON.parse(da);
+      DEBT_TYPES.forEach(t=>{ DEBT_ACCOUNTS[t] = Array.isArray(parsed[t]) ? parsed[t] : []; });
+    }
+    if(cm){
+      const parsed = JSON.parse(cm);
+      Object.keys(CATEGORY_MAP).forEach(c=>{
+        if(Array.isArray(parsed[c]) && parsed[c].length > 0){ CATEGORY_MAP[c] = parsed[c]; }
+      });
+    }
+    return !!e;
+  }catch(err){ return false; }
+}
+
+/* ---------- SAMPLE DATA ---------- */
+function buildSampleData(){
+  const data = [];
+  const months = [
+    {y:2026, m:3}, {y:2026, m:4}, {y:2026, m:5} // Apr, May, Jun 2026 (0-indexed)
+  ];
+  function add(date, category, subcategory, amount, status, notes, type){
+    const obj = {id: uid(), date, category, subcategory, amount, status, notes: notes||""};
+    if(category === "Expense"){ obj.type = type || "Other"; }
+    data.push(obj);
+  }
+
+  months.forEach(({y,m})=>{
+    const mm = String(m+1).padStart(2,'0');
+    // Income
+    add(`${y}-${mm}-01`, "Income", "Salary & Paycheck", 4200, "Closed", "Monthly salary");
+    add(`${y}-${mm}-15`, "Income", "Salary & Paycheck", 4200, "Closed", "Mid-month salary");
+    add(`${y}-${mm}-05`, "Income", "Interests & Dividends", 35.5, "Closed", "Savings interest");
+    if(m === 5){ add(`${y}-${mm}-20`, "Income", "Bonus & Commissions", 600, "Open", "Q2 bonus"); }
+
+    // Expenses
+    add(`${y}-${mm}-02`, "Expense", "Home", 1450, "Closed", "Rent", "Mortgage");
+    add(`${y}-${mm}-03`, "Expense", "Groceries", 380, "Closed", "Weekly groceries", "Other");
+    add(`${y}-${mm}-06`, "Expense", "Transportation", 120, "Closed", "Fuel + transit", "Other");
+    add(`${y}-${mm}-08`, "Expense", "Meal & Drinks", 165, "Closed", "Dining out", "Credit Card");
+    add(`${y}-${mm}-10`, "Expense", "Communication", 85, "Closed", "Phone & internet", "Other");
+    add(`${y}-${mm}-12`, "Expense", "Entertainment", 60, "Closed", "Streaming + movies", "Credit Card");
+    add(`${y}-${mm}-14`, "Expense", "Health", 95, "Closed", "Pharmacy", "Other");
+    add(`${y}-${mm}-18`, "Expense", "Shopping", 210, "Open", "Clothing", "Credit Card");
+    add(`${y}-${mm}-20`, "Expense", "Taxes", 950, "Closed", "Estimated income tax", "Other");
+    add(`${y}-${mm}-22`, "Expense", "Life Insurance", 75, "Closed", "Monthly premium", "Financing");
+    add(`${y}-${mm}-25`, "Expense", "Education", 50, "Open", "Online course", "Credit Card");
+    if(m===5){ add(`${y}-${mm}-28`, "Expense", "Travel", 480, "Open", "Flight booking", "Credit Card"); }
+
+    // Investment
+    add(`${y}-${mm}-03`, "Investment", "Retirement", 500, "Closed", "401k contribution");
+    add(`${y}-${mm}-16`, "Investment", "Bonds & Stocks", 300, m===5?"Open":"Closed", "Index fund buy");
+    add(`${y}-${mm}-20`, "Investment", "Emergency", 150, "Closed", "Emergency fund top-up");
+    if(m===5){ add(`${y}-${mm}-27`, "Investment", "Crypto", 100, "Open", "BTC DCA"); }
+
+    // Capital (gains/losses snapshot, typically Closed and dated end of month-ish)
+    add(`${y}-${mm}-28`, "Capital", "Bonds & Stocks", m===3? 85 : (m===4? -40 : 120), "Closed", "Portfolio P&L");
+    add(`${y}-${mm}-28`, "Capital", "Crypto", m===3? -30 : (m===4? 60 : 45), "Closed", "Crypto P&L");
+    add(`${y}-${mm}-28`, "Capital", "Retirement", m===3? 60 : (m===4? 70 : 90), "Closed", "401k growth");
+  });
+
+  return data;
+}
+
+/* ---------- CALCULATION ENGINE ---------- */
+
+// Sum entries matching category (and optional status filter) within a date predicate
+function sumEntries(predicate, category, statusFilter){
+  return entries
+    .filter(e => e.category === category && predicate(e.date) && (!statusFilter || e.status === statusFilter))
+    .reduce((acc,e)=>acc+Number(e.amount), 0);
+}
+
+// Memoization cache for computeMonthFinancials - cleared whenever entries/settings change
+let _financialsCache = {};
+function invalidateFinancialsCache(){ _financialsCache = {}; }
+
+// Compute the "Balance" for a given month, optionally restricted to Closed-only (Cashflow)
+// Returns full breakdown object.
+function computeMonthFinancials(refDate, closedOnly){
+  const cacheKey = `${refDate.getFullYear()}-${refDate.getMonth()}-${closedOnly?1:0}`;
+  if(_financialsCache[cacheKey]) return _financialsCache[cacheKey];
+
+  const inMonth = (dateStr)=> isSameMonth(dateStr, refDate);
+  const statusFilter = closedOnly ? "Closed" : null;
+
+  // Previous month's balance (always uses the SAME mode - closed only or full projection - recursively)
+  let prevBalance = 0;
+  const prevDate = new Date(refDate.getFullYear(), refDate.getMonth()-1, 1);
+  // Only compute previous balance if there is any entry on or before that month (avoid infinite recursion guard)
+  const hasEarlierData = entries.some(e => parseLocalDate(e.date) < new Date(refDate.getFullYear(), refDate.getMonth(), 1));
+  if(hasEarlierData){
+    prevBalance = computeMonthFinancials(prevDate, closedOnly).balance;
+  }
+
+  const incomeSum = sumEntries(inMonth, "Income", statusFilter);
+  const grossIncome = incomeSum + prevBalance;
+
+  const taxesEntrySum = entries
+    .filter(e => e.category==="Expense" && e.subcategory==="Taxes" && inMonth(e.date) && (!statusFilter || e.status===statusFilter))
+    .reduce((a,e)=>a+Number(e.amount),0);
+  const taxes = taxesEntrySum + (SETTINGS.taxRate/100) * grossIncome;
+
+  const netIncome = grossIncome - taxes + (SETTINGS.netAdj/100) * grossIncome;
+
+  const expenseNoTaxesSum = entries
+    .filter(e => e.category==="Expense" && e.subcategory!=="Taxes" && inMonth(e.date) && (!statusFilter || e.status===statusFilter))
+    .reduce((a,e)=>a+Number(e.amount),0);
+  const expensesNoTaxes = expenseNoTaxesSum + (SETTINGS.expAdj/100) * netIncome;
+
+  const investmentSum = sumEntries(inMonth, "Investment", statusFilter);
+  const investment = investmentSum + (SETTINGS.invAdj/100) * netIncome;
+
+  const balance = netIncome - expensesNoTaxes - investment + (SETTINGS.balAdj/100) * netIncome;
+
+  const result = {
+    grossIncome, taxes, netIncome, expensesNoTaxes, investment, balance,
+    prevBalance, incomeSum, investmentSum
+  };
+  _financialsCache[cacheKey] = result;
+  return result;
+}
+
+/* Daily cumulative balance for the line chart (cumulative across the month, closed entries define "actual" cashflow but
+   the chart reflects all entries' cumulative net effect day by day, starting from previous month's projected balance) */
+function computeDailyCashflow(refDate){
+  const year = refDate.getFullYear();
+  const month = refDate.getMonth();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+
+  // Starting point = previous month balance (projection, all entries)
+  const prevDate = new Date(year, month-1, 1);
+  const hasEarlierData = entries.some(e => parseLocalDate(e.date) < new Date(year, month, 1));
+  let running = hasEarlierData ? computeMonthFinancials(prevDate, false).balance : 0;
+
+  const labels = [];
+  const values = [];
+
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const dayEntries = entries.filter(e=>e.date===dateStr);
+    let dayNet = 0;
+    dayEntries.forEach(e=>{
+      const amt = Number(e.amount);
+      if(e.category === "Income"){ dayNet += amt; }
+      else if(e.category === "Expense"){ dayNet -= amt; }
+      else if(e.category === "Investment"){ dayNet -= amt; }
+      // Capital does not affect cashflow balance
+    });
+    running += dayNet;
+    labels.push(String(day));
+    values.push(running);
+  }
+  return {labels, values};
+}
+
+/* Donut breakdown: group entries by subcategory for a given top-level category & month */
+function computeDonutBreakdown(refDate, category){
+  const inMonth = (dateStr)=> isSameMonth(dateStr, refDate);
+  const grossIncome = computeMonthFinancials(refDate, false).grossIncome;
+
+  const subcats = CATEGORY_MAP[category];
+  const rows = subcats.map(sub=>{
+    const amount = entries
+      .filter(e=>e.category===category && e.subcategory===sub && inMonth(e.date))
+      .reduce((a,e)=>a+Number(e.amount),0);
+    return {subcategory: sub, amount, pct: grossIncome !== 0 ? (amount/grossIncome*100) : 0};
+  }).filter(r=>r.amount !== 0);
+
+  rows.sort((a,b)=>b.amount-a.amount);
+  return rows;
+}
+
+/* =========================================================
+   RENDER: MONEY VIEW
+   ========================================================= */
+
+/* =========================================================
+   RENDER: MONEY VIEW
+   ========================================================= */
+let moneyLineChartInstance = null;
+
+function renderMoney(){
+  document.getElementById('moneyLabel').textContent = fmtMonthYear(moneyMonthDate);
+
+  const inMonth = (dateStr) => isSameMonth(dateStr, moneyMonthDate);
+
+  // Invested = sum of Closed Investment entries for the month
+  const invested = entries
+    .filter(e => e.category === 'Investment' && e.status === 'Closed' && inMonth(e.date))
+    .reduce((a, e) => a + Number(e.amount), 0);
+
+  // Planned = sum of ALL Investment entries (open + closed) for the month
+  const planned = entries
+    .filter(e => e.category === 'Investment' && inMonth(e.date))
+    .reduce((a, e) => a + Number(e.amount), 0);
+
+  // Cumulative: all Closed Investment entries up to and including selected month
+  const cutoff = new Date(moneyMonthDate.getFullYear(), moneyMonthDate.getMonth() + 1, 0);
+  const cumulative = entries
+    .filter(e => e.category === 'Investment' && e.status === 'Closed' && parseLocalDate(e.date) <= cutoff)
+    .reduce((a, e) => a + Number(e.amount), 0);
+
+  document.getElementById('moneyCardInvested').textContent = fmtMoney(invested);
+  document.getElementById('moneyCardPlanned').textContent = fmtMoney(planned);
+  document.getElementById('moneyCardCumulative').textContent = fmtMoney(cumulative);
+
+  // Capital all-time = sum of all Capital entries (gains/losses)
+  const capitalAllTime = entries
+    .filter(e => e.category === 'Capital')
+    .reduce((a, e) => a + Number(e.amount), 0);
+
+  // Net Position = cumulative invested + all-time capital
+  const netPosition = cumulative + capitalAllTime;
+
+  const capitalEl = document.getElementById('moneyCardCapital');
+  capitalEl.textContent = fmtMoney(capitalAllTime);
+  capitalEl.className = 'value ' + (capitalAllTime >= 0 ? 'pos' : 'neg');
+
+  const netEl = document.getElementById('moneyCardNetPosition');
+  netEl.textContent = fmtMoney(netPosition);
+  netEl.className = 'value ' + (netPosition >= 0 ? 'pos' : 'neg');
+
+  const variation = cumulative !== 0 ? (capitalAllTime / cumulative) * 100 : 0;
+  const varEl = document.getElementById('moneyCardVariation');
+  const varSign = variation >= 0 ? '+' : '';
+  varEl.textContent = varSign + variation.toFixed(2) + '% vs invested';
+  varEl.style.color = variation >= 0 ? 'var(--sage)' : 'var(--terracotta)';
+
+  // Progress bar: invested vs planned
+  const pct = planned > 0 ? Math.min(100, Math.max(0, (invested / planned) * 100)) : 0;
+  document.getElementById('moneyProgressFill').style.width = pct.toFixed(1) + '%';
+  document.getElementById('moneyProgressLabel').textContent = pct.toFixed(1) + '% of plan complete';
+  document.getElementById('moneyProgressNums').textContent = `${fmtMoney(invested)} / ${fmtMoney(planned)}`;
+
+  // Subcategory breakdown
+  renderMoneyBreakdown(inMonth);
+
+  // 12-month projection line chart
+  renderMoneyLineChart();
+  renderMoneyAllTimeBreakdown();
+}
+
+function renderMoneyBreakdown(inMonth){
+  const subcats = CATEGORY_MAP.Investment;
+  const rows = subcats.map((sub, i) => {
+    const inv = entries.filter(e => e.category === 'Investment' && e.subcategory === sub && e.status === 'Closed' && inMonth(e.date)).reduce((a, e) => a + Number(e.amount), 0);
+    const pln = entries.filter(e => e.category === 'Investment' && e.subcategory === sub && inMonth(e.date)).reduce((a, e) => a + Number(e.amount), 0);
+    return {sub, inv, pln, i};
+  }).filter(r => r.pln !== 0 || r.inv !== 0);
+
+  if(rows.length === 0){
+    document.getElementById('moneyBreakdown').innerHTML = `<div class="empty-state" style="padding:20px;"><span class="muted">No investment entries this month.</span></div>`;
+    return;
+  }
+
+  const totalPln = rows.reduce((a, r) => a + r.pln, 0);
+  const html = rows.map(r => {
+    const alloc = totalPln > 0 ? (r.pln / totalPln * 100).toFixed(1) : '0.0';
+    const subPct = r.pln > 0 ? Math.min(100, (r.inv / r.pln * 100)) : (r.inv > 0 ? 100 : 0);
+    return `
+      <div class="breakdown-row">
+        <div class="breakdown-left">
+          <div class="breakdown-swatch" style="background:${PALETTE[r.i % PALETTE.length]}"></div>
+          <div>
+            <div class="breakdown-name">${r.sub}</div>
+            <div class="muted" style="font-size:11px;">Planned: ${fmtMoney(r.pln)} · ${alloc}% of total</div>
+            <div class="progress-track" style="height:4px;margin-top:4px;width:100px;">
+              <div class="progress-fill" style="width:${subPct.toFixed(1)}%;height:100%;background:${PALETTE[r.i % PALETTE.length]};"></div>
+            </div>
+          </div>
+        </div>
+        <div class="breakdown-right">
+          <div class="breakdown-amt" style="color:${PALETTE[r.i % PALETTE.length]}">${fmtMoney(r.inv)}</div>
+          <div class="breakdown-pct">invested</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('moneyBreakdown').innerHTML = html;
+}
+
+function renderMoneyLineChart(){
+  const ctx = document.getElementById('moneyLineChart');
+  if(moneyLineChartInstance){ moneyLineChartInstance.destroy(); }
+
+  const labels = [];
+  const investedData = [];   // cumulative Closed Investment
+  const plannedData  = [];   // cumulative All Investment (projected)
+  const netData      = [];   // cumulative (Closed Investment + Capital) month over month
+
+  // Prior cumulative base: everything before the selected month
+  const startCutoff = new Date(moneyMonthDate.getFullYear(), moneyMonthDate.getMonth(), 0);
+  let cumulativeInvested = entries
+    .filter(e => e.category === 'Investment' && e.status === 'Closed' && parseLocalDate(e.date) <= startCutoff)
+    .reduce((a, e) => a + Number(e.amount), 0);
+  let cumulativePlanned = entries
+    .filter(e => e.category === 'Investment' && parseLocalDate(e.date) <= startCutoff)
+    .reduce((a, e) => a + Number(e.amount), 0);
+  let cumulativeNet = cumulativeInvested + entries
+    .filter(e => e.category === 'Capital' && parseLocalDate(e.date) <= startCutoff)
+    .reduce((a, e) => a + Number(e.amount), 0);
+
+  for(let i = 0; i < 12; i++){
+    const d = new Date(moneyMonthDate.getFullYear(), moneyMonthDate.getMonth() + i, 1);
+    const inM = (dateStr) => isSameMonth(dateStr, d);
+
+    const monthInvested = entries.filter(e => e.category === 'Investment' && e.status === 'Closed' && inM(e.date)).reduce((a, e) => a + Number(e.amount), 0);
+    const monthPlanned  = entries.filter(e => e.category === 'Investment' && inM(e.date)).reduce((a, e) => a + Number(e.amount), 0);
+    const monthCapital  = entries.filter(e => e.category === 'Capital' && inM(e.date)).reduce((a, e) => a + Number(e.amount), 0);
+
+    cumulativeInvested += monthInvested;
+    cumulativePlanned  += monthPlanned;
+    cumulativeNet      += monthInvested + monthCapital; // each month: add newly invested + that month's capital
+
+    labels.push(d.toLocaleString(undefined, {month:'short', year:'2-digit'}));
+    investedData.push(cumulativeInvested);
+    plannedData.push(cumulativePlanned);
+    netData.push(cumulativeNet);
+  }
+
+  moneyLineChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Invested (Closed)',
+          data: investedData,
+          borderColor: '#D4A24E',
+          backgroundColor: 'rgba(212,162,78,0.12)',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: '#D4A24E',
+          borderWidth: 2
+        },
+        {
+          label: 'Planned (All)',
+          data: plannedData,
+          borderColor: '#5C6B7A',
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.35,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: '#5C6B7A',
+          borderWidth: 2,
+          borderDash: [5, 4]
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { font: { size: 11, family: "'Inter', sans-serif" }, color: '#5C6B7A', boxWidth: 12, padding: 12 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: ${fmtMoney(ctx.parsed.y)}`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#5C6B7A' } },
+        y: { grid: { color: '#E3DFD6' }, ticks: { display: false } }
+      }
+    }
+  });
+}
+
+function renderMoneyAllTimeBreakdown(){
+  const container = document.getElementById('moneyAllTimeBreakdown');
+  const subcats = CATEGORY_MAP.Investment;
+
+  const rows = subcats.map((sub, i) => {
+    const invested = entries
+      .filter(e => e.category === 'Investment' && e.status === 'Closed' && e.subcategory === sub)
+      .reduce((a, e) => a + Number(e.amount), 0);
+    const capital = entries
+      .filter(e => e.category === 'Capital' && e.subcategory === sub)
+      .reduce((a, e) => a + Number(e.amount), 0);
+    return {sub, invested, capital, i};
+  }).filter(r => r.invested !== 0 || r.capital !== 0)
+    .sort((a, b) => b.invested - a.invested);
+
+  if(rows.length === 0){
+    container.innerHTML = `<div class="empty-state" style="padding:20px;"><span class="muted">No closed investment entries yet.</span></div>`;
+    return;
+  }
+
+  const grandInvested = rows.reduce((a, r) => a + r.invested, 0);
+  const grandCapital  = rows.reduce((a, r) => a + r.capital,  0);
+
+  // Column headers
+  const header = `
+    <div style="display:flex;justify-content:space-between;padding:4px 2px 8px;border-bottom:1px solid var(--line);margin-bottom:2px;">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);flex:1;">Subcategory</span>
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);min-width:80px;text-align:right;">Invested</span>
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);min-width:80px;text-align:right;">Capital</span>
+    </div>`;
+
+  const html = rows.map(r => {
+    const alloc = grandInvested !== 0 ? (r.invested / grandInvested * 100).toFixed(1) : '0.0';
+    const barWidth = grandInvested !== 0 ? Math.max(0, Math.min(100, (r.invested / grandInvested * 100))) : 0;
+    const capColor = r.capital > 0 ? 'color:#3E7C59;' : r.capital < 0 ? 'color:#C1583F;' : 'color:var(--slate);';
+    return `
+      <div class="breakdown-row" style="align-items:flex-start;">
+        <div class="breakdown-left" style="flex:1;min-width:0;">
+          <div class="breakdown-swatch" style="background:${PALETTE[r.i % PALETTE.length]};flex-shrink:0;margin-top:3px;"></div>
+          <div style="flex:1;min-width:0;">
+            <div class="breakdown-name">${r.sub}</div>
+            <div class="muted" style="font-size:11px;">${alloc}% of total</div>
+            <div class="progress-track" style="height:4px;margin-top:4px;width:80px;">
+              <div class="progress-fill" style="width:${barWidth.toFixed(1)}%;height:100%;background:${PALETTE[r.i % PALETTE.length]};"></div>
+            </div>
+          </div>
+        </div>
+        <div style="min-width:80px;text-align:right;flex-shrink:0;">
+          <div class="breakdown-amt" style="color:${PALETTE[r.i % PALETTE.length]}">${fmtMoney(r.invested)}</div>
+        </div>
+        <div style="min-width:80px;text-align:right;flex-shrink:0;">
+          <div class="breakdown-amt" style="${capColor}">${r.capital !== 0 ? (r.capital > 0 ? '+' : '') + fmtMoney(r.capital) : '—'}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Total row
+  const capTotalColor = grandCapital > 0 ? 'color:#3E7C59;' : grandCapital < 0 ? 'color:#C1583F;' : 'color:var(--slate);';
+  const totalRow = `
+    <div class="breakdown-row" style="border-top:2px solid var(--line);margin-top:4px;padding-top:10px;">
+      <div class="breakdown-left" style="flex:1;">
+        <div class="breakdown-swatch" style="background:transparent;"></div>
+        <div class="breakdown-name" style="font-weight:700;">Total</div>
+      </div>
+      <div style="min-width:80px;text-align:right;flex-shrink:0;">
+        <div class="breakdown-amt gold">${fmtMoney(grandInvested)}</div>
+      </div>
+      <div style="min-width:80px;text-align:right;flex-shrink:0;">
+        <div class="breakdown-amt" style="${capTotalColor}">${grandCapital !== 0 ? (grandCapital > 0 ? '+' : '') + fmtMoney(grandCapital) : '—'}</div>
+      </div>
+    </div>`;
+
+  container.innerHTML = header + html + totalRow;
+}
+
+function switchView(viewName){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.navtab').forEach(t=>t.classList.remove('active'));
+
+  if(viewName === 'detail'){
+    document.getElementById('view-detail').classList.add('active');
+    // keep "home" tab highlighted since detail is reached from home
+    document.querySelector('.navtab[data-view="home"]').classList.add('active');
+    return;
+  }
+
+  document.getElementById('view-'+viewName).classList.add('active');
+  const tab = document.querySelector(`.navtab[data-view="${viewName}"]`);
+  if(tab) tab.classList.add('active');
+
+  renderCurrentView(viewName);
+}
+
+function renderCurrentView(viewName){
+  if(viewName === 'home') renderHome();
+  else if(viewName === 'detail') renderDetail();
+  else if(viewName === 'transactions') renderTransactions();
+  else if(viewName === 'debts') renderDebts();
+  else if(viewName === 'money') renderMoney();
+}
+
+document.querySelectorAll('.navtab').forEach(tab=>{
+  tab.addEventListener('click', ()=> switchView(tab.dataset.view));
+});
+
+document.getElementById('detailBack').addEventListener('click', ()=> switchView('home'));
+
+/* Home month navigation */
+document.getElementById('homePrev').addEventListener('click', ()=>{
+  homeDate = new Date(homeDate.getFullYear(), homeDate.getMonth()-1, 1);
+  renderHome();
+});
+document.getElementById('homeNext').addEventListener('click', ()=>{
+  homeDate = new Date(homeDate.getFullYear(), homeDate.getMonth()+1, 1);
+  renderHome();
+});
+
+/* Donut category segmented control */
+document.getElementById('donutSeg').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.getElementById('donutSeg').querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    donutCategory = btn.dataset.cat;
+    renderDonutChart();
+  });
+});
+
+/* Detail selectors */
+document.getElementById('detailCategorySel').addEventListener('change', (e)=>{
+  detailCategory = e.target.value;
+  detailSubcategory = CATEGORY_MAP[detailCategory][0];
+  populateDetailSelectors();
+  renderDetail();
+});
+document.getElementById('detailSubcatSel').addEventListener('change', (e)=>{
+  detailSubcategory = e.target.value;
+  renderDetail();
+});
+
+/* Transactions period filter */
+document.getElementById('txPeriodSeg').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.getElementById('txPeriodSeg').querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    txPeriod = btn.dataset.period;
+    document.getElementById('txDateRangeRow').style.display = txPeriod === 'custom' ? 'grid' : 'none';
+    renderTransactions();
+  });
+});
+
+document.getElementById('txDateFrom').addEventListener('change', e=>{
+  txDateFrom = e.target.value;
+  renderTransactions();
+});
+document.getElementById('txDateTo').addEventListener('change', e=>{
+  txDateTo = e.target.value;
+  renderTransactions();
+});
+
+/* Transactions sort toggle */
+const txSortBtn = document.getElementById('txSortBtn');
+const txSortIcon = document.getElementById('txSortIcon');
+const iconAsc  = '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>';
+const iconDesc = '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="5 12 12 5 19 12"/>';
+txSortBtn.addEventListener('click', ()=>{
+  txSortAsc = !txSortAsc;
+  txSortIcon.innerHTML = txSortAsc ? iconAsc : iconDesc;
+  txSortBtn.title = txSortAsc ? 'Oldest first' : 'Newest first';
+  renderTransactions();
+});
+
+/* Transactions filter */
+document.getElementById('txFilterSeg').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.getElementById('txFilterSeg').querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    txFilter = btn.dataset.filter;
+    renderTransactions();
+  });
+});
+
+/* Transactions search */
+const txSearchInput = document.getElementById('txSearchInput');
+const txSearchClear = document.getElementById('txSearchClear');
+txSearchInput.addEventListener('input', (e)=>{
+  txSearchQuery = e.target.value;
+  txSearchClear.style.display = txSearchQuery ? 'flex' : 'none';
+  renderTransactions();
+});
+txSearchClear.addEventListener('click', ()=>{
+  txSearchQuery = '';
+  txSearchInput.value = '';
+  txSearchClear.style.display = 'none';
+  renderTransactions();
+  txSearchInput.focus();
+});
+
+/* Debts search */
+const debtSearchInput = document.getElementById('debtSearchInput');
+const debtSearchClear = document.getElementById('debtSearchClear');
+debtSearchInput.addEventListener('input', (e)=>{
+  debtSearchQuery = e.target.value;
+  debtSearchClear.style.display = debtSearchQuery ? 'flex' : 'none';
+  renderDebts();
+});
+debtSearchClear.addEventListener('click', ()=>{
+  debtSearchQuery = '';
+  debtSearchInput.value = '';
+  debtSearchClear.style.display = 'none';
+  renderDebts();
+  debtSearchInput.focus();
+});
+
+/* Debts filter */
+document.getElementById('debtFilterSeg').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.getElementById('debtFilterSeg').querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    debtFilter = btn.dataset.filter;
+    renderDebts();
+  });
+});
+
+/* Debts type filter */
+document.getElementById('debtTypeFilterSeg').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.getElementById('debtTypeFilterSeg').querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    debtTypeFilter = btn.dataset.type;
+    renderDebts();
+  });
+});
+
+/* Money month navigation */
+document.getElementById('moneyPrev').addEventListener('click', ()=>{
+  moneyMonthDate = new Date(moneyMonthDate.getFullYear(), moneyMonthDate.getMonth()-1, 1);
+  renderMoney();
+});
+document.getElementById('moneyNext').addEventListener('click', ()=>{
+  moneyMonthDate = new Date(moneyMonthDate.getFullYear(), moneyMonthDate.getMonth()+1, 1);
+  renderMoney();
+});
+
+/* =========================================================
+   ENTRY MODAL (ADD / EDIT / DELETE)
+   ========================================================= */
+function populateEntryCategorySelectors(selectedCategory, selectedSub){
+  const catSel = document.getElementById('entryCategory');
+  catSel.innerHTML = Object.keys(CATEGORY_MAP).map(c=>`<option value="${c}" ${c===selectedCategory?'selected':''}>${c}</option>`).join('');
+
+  const subSel = document.getElementById('entrySubcategory');
+  subSel.innerHTML = CATEGORY_MAP[selectedCategory].map(s=>`<option value="${s}" ${s===selectedSub?'selected':''}>${s}</option>`).join('');
+
+  document.getElementById('entryTypeField').style.display = (selectedCategory === 'Expense') ? 'block' : 'none';
+  if(selectedCategory === 'Expense'){
+    populateEntryAccountSelector(document.getElementById('entryType').value, null);
+  } else {
+    document.getElementById('entryAccountField').style.display = 'none';
+  }
+}
+
+// Populate the Account dropdown based on the chosen debt Type. Hides the field if no accounts exist for that type.
+function populateEntryAccountSelector(selectedType, selectedAccount){
+  const accountField = document.getElementById('entryAccountField');
+  const accountSel = document.getElementById('entryAccount');
+  const accounts = DEBT_ACCOUNTS[selectedType] || [];
+
+  if(accounts.length === 0){
+    accountField.style.display = 'none';
+    accountSel.innerHTML = '';
+    return;
+  }
+
+  accountField.style.display = 'block';
+  const options = ['<option value="">None</option>'].concat(
+    accounts.map(a=>`<option value="${a}" ${a===selectedAccount?'selected':''}>${a}</option>`)
+  );
+  accountSel.innerHTML = options.join('');
+  if(!selectedAccount){ accountSel.value = ''; }
+}
+
+document.getElementById('entryCategory').addEventListener('change', (e)=>{
+  const cat = e.target.value;
+  populateEntryCategorySelectors(cat, CATEGORY_MAP[cat][0]);
+});
+
+document.getElementById('entryType').addEventListener('change', (e)=>{
+  populateEntryAccountSelector(e.target.value, null);
+});
+
+function setStatusToggle(status){
+  const isClosed = status === 'Closed';
+  document.getElementById('entryStatusToggle').checked = isClosed;
+  document.getElementById('entryStatusLabel').textContent = isClosed ? 'Closed' : 'Open';
+}
+
+document.getElementById('entryStatusToggle').addEventListener('change', (e)=>{
+  document.getElementById('entryStatusLabel').textContent = e.target.checked ? 'Closed' : 'Open';
+});
+
+function openEntryModal(id){
+  const overlay = document.getElementById('entryModalOverlay');
+  const title = document.getElementById('entryModalTitle');
+  const deleteBtn = document.getElementById('entryDeleteBtn');
+
+  if(id){
+    const entry = entries.find(e=>e.id === id);
+    if(!entry) return;
+    title.textContent = 'Edit Entry';
+    deleteBtn.style.display = 'block';
+    document.getElementById('entryId').value = entry.id;
+    document.getElementById('entryDate').value = entry.date;
+    populateEntryCategorySelectors(entry.category, entry.subcategory);
+    document.getElementById('entryAmount').value = entry.amount;
+    setStatusToggle(entry.status);
+    document.getElementById('entryNotes').value = entry.notes || '';
+    if(entry.category === 'Expense'){
+      const t = entry.type || 'Other';
+      document.getElementById('entryType').value = t;
+      populateEntryAccountSelector(t, entry.account || null);
+    }
+  } else {
+    title.textContent = 'Add Entry';
+    deleteBtn.style.display = 'none';
+    document.getElementById('entryId').value = '';
+    const today = new Date();
+    document.getElementById('entryDate').value = formatLocalDate(today);
+    populateEntryCategorySelectors('Income', CATEGORY_MAP.Income[0]);
+    document.getElementById('entryAmount').value = '';
+    setStatusToggle('Open'); // default Open
+    document.getElementById('entryNotes').value = '';
+    document.getElementById('entryType').value = 'Other';
+  }
+  overlay.classList.add('active');
+}
+
+function closeEntryModal(){
+  document.getElementById('entryModalOverlay').classList.remove('active');
+}
+
+document.getElementById('entryModalClose').addEventListener('click', closeEntryModal);
+document.getElementById('entryModalOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'entryModalOverlay') closeEntryModal();
+});
+
+document.getElementById('entrySaveBtn').addEventListener('click', ()=>{
+  const idVal = document.getElementById('entryId').value;
+  const date = document.getElementById('entryDate').value;
+  const category = document.getElementById('entryCategory').value;
+  const subcategory = document.getElementById('entrySubcategory').value;
+  const amount = parseFloat(document.getElementById('entryAmount').value);
+  const status = document.getElementById('entryStatusToggle').checked ? 'Closed' : 'Open';
+  const notes = document.getElementById('entryNotes').value.trim();
+  const type = document.getElementById('entryType').value;
+  const account = document.getElementById('entryAccount').value;
+
+  if(!date || isNaN(amount)){
+    showToast('Please enter a date and amount.');
+    return;
+  }
+
+  if(idVal){
+    const entry = entries.find(e=>e.id === Number(idVal));
+    entry.date = date;
+    entry.category = category;
+    entry.subcategory = subcategory;
+    entry.amount = amount; // preserve sign: negative = cashback/withdrawal
+    entry.status = status;
+    entry.notes = notes;
+    if(category === 'Expense'){
+      entry.type = type;
+      if(account){ entry.account = account; } else { delete entry.account; }
+    } else {
+      delete entry.type;
+      delete entry.account;
+    }
+    showToast('Entry updated');
+  } else {
+    const newEntry = {
+      id: uid(),
+      date, category, subcategory,
+      amount: amount, // preserve sign: negative = cashback/withdrawal
+      status, // defaults to Open via UI default
+      notes
+    };
+    if(category === 'Expense'){
+      newEntry.type = type;
+      if(account){ newEntry.account = account; }
+    }
+    entries.push(newEntry);
+    showToast('Entry added');
+  }
+
+  saveState();
+  closeEntryModal();
+  renderCurrentView(getActiveViewName());
+});
+
+document.getElementById('entryDeleteBtn').addEventListener('click', ()=>{
+  const idVal = document.getElementById('entryId').value;
+  if(!idVal) return;
+  entries = entries.filter(e=>e.id !== Number(idVal));
+  saveState();
+  closeEntryModal();
+  showToast('Entry deleted');
+  renderCurrentView(getActiveViewName());
+});
+
+document.getElementById('addFab').addEventListener('click', ()=> openEntryModal(null));
+
+function getActiveViewName(){
+  const activeView = document.querySelector('.view.active');
+  if(!activeView) return 'home';
+  const id = activeView.id.replace('view-','');
+  return id === 'detail' ? 'detail' : id;
+}
+
+/* =========================================================
+   CSV IMPORT / EXPORT / TEMPLATE
+   ========================================================= */
+const CSV_HEADERS = ['id','date','category','subcategory','amount','status','notes','type','account'];
+
+function entriesToCsv(rows){
+  const lines = [CSV_HEADERS.join(',')];
+  rows.forEach(e=>{
+    const vals = CSV_HEADERS.map(h=>{
+      let v = e[h] !== undefined ? e[h] : '';
+      v = String(v).replace(/"/g,'""');
+      if(v.includes(',') || v.includes('"') || v.includes('\n')){ v = `"${v}"`; }
+      return v;
+    });
+    lines.push(vals.join(','));
+  });
+  return lines.join('\n');
+}
+
+// Keeps track of the last-generated CSV so the "Try Download Again" / "Open in New Tab"
+// buttons in the fallback modal can re-use it.
+let _pendingCsv = {content: '', filename: ''};
+
+function attemptDirectDownload(content, filename){
+  try{
+    const blob = new Blob([content], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  }catch(err){ /* ignore - fallback modal covers this */ }
+}
+
+// Main entry point: attempts a normal download AND opens a fallback modal with the
+// raw CSV text, since automatic downloads can be silently blocked in sandboxed iframes
+// (e.g. the Claude.ai artifact preview).
+function downloadCsv(content, filename, title){
+  _pendingCsv = {content, filename};
+  attemptDirectDownload(content, filename);
+  openCsvTextModal(title || 'Export CSV', content);
+}
+
+function openCsvTextModal(title, content){
+  document.getElementById('csvTextModalTitle').textContent = title;
+  document.getElementById('csvTextArea').value = content;
+  document.getElementById('csvTextModalOverlay').classList.add('active');
+}
+function closeCsvTextModal(){
+  document.getElementById('csvTextModalOverlay').classList.remove('active');
+}
+document.getElementById('csvTextModalClose').addEventListener('click', closeCsvTextModal);
+document.getElementById('csvTextModalOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'csvTextModalOverlay') closeCsvTextModal();
+});
+
+document.getElementById('csvTextCopyBtn').addEventListener('click', async ()=>{
+  const textarea = document.getElementById('csvTextArea');
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(textarea.value);
+    } else {
+      document.execCommand('copy');
+    }
+    showToast('Copied to clipboard');
+  }catch(err){
+    showToast('Copy failed — text is selected, use Ctrl/Cmd+C');
+  }
+});
+
+document.getElementById('csvTextOpenBtn').addEventListener('click', ()=>{
+  try{
+    const encoded = encodeURIComponent(_pendingCsv.content);
+    const win = window.open('data:text/csv;charset=utf-8,' + encoded, '_blank');
+    if(!win){ showToast('Pop-up blocked — copy the text instead'); }
+  }catch(err){
+    showToast('Could not open new tab — copy the text instead');
+  }
+});
+
+document.getElementById('csvTextDownloadBtn').addEventListener('click', ()=>{
+  attemptDirectDownload(_pendingCsv.content, _pendingCsv.filename);
+  showToast('Download attempted — check your downloads folder');
+});
+
+document.getElementById('downloadTemplateBtn').addEventListener('click', ()=>{
+  const sample = [{
+    id:'', date:'2026-06-01', category:'Income', subcategory:'Salary & Paycheck',
+    amount:1000, status:'Open', notes:'Example entry', type:'', account:''
+  }];
+  downloadCsv(entriesToCsv(sample), 'wealthme_template.csv', 'CSV Template');
+});
+
+document.getElementById('exportCsvBtn').addEventListener('click', ()=>{
+  if(entries.length === 0){
+    showToast('No entries to export');
+    return;
+  }
+  downloadCsv(entriesToCsv(entries), 'wealthme_export.csv', `Export CSV (${entries.length} entries)`);
+});
+
+document.getElementById('importCsvBtn').addEventListener('click', ()=>{
+  document.getElementById('csvFileInput').click();
+});
+
+document.getElementById('csvFileInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt)=>{
+    try{
+      const text = evt.target.result;
+      const imported = parseCsv(text);
+      let count = 0;
+      imported.forEach(row=>{
+        if(!row.date || !row.category || !row.subcategory || row.amount === undefined || row.amount === '') return;
+        if(!CATEGORY_MAP[row.category]) return;
+        if(!CATEGORY_MAP[row.category].includes(row.subcategory)) return;
+        const newEntry = {
+          id: uid(),
+          date: row.date,
+          category: row.category,
+          subcategory: row.subcategory,
+          amount: parseFloat(row.amount) || 0, // preserve sign: negative = cashback/withdrawal
+          status: (row.status === 'Closed') ? 'Closed' : 'Open',
+          notes: row.notes || ''
+        };
+        if(row.category === 'Expense'){
+          newEntry.type = ['Credit Card','Financing','Mortgage','Other'].includes(row.type) ? row.type : 'Other';
+          if(row.account){
+            newEntry.account = row.account;
+            // auto-register new account names so they appear in the Account dropdown
+            if(!DEBT_ACCOUNTS[newEntry.type].includes(row.account)){
+              DEBT_ACCOUNTS[newEntry.type].push(row.account);
+            }
+          }
+        }
+        entries.push(newEntry);
+        count++;
+      });
+      saveState();
+      showToast(`Imported ${count} entries`);
+      closeSettingsModal();
+      renderCurrentView(getActiveViewName());
+    }catch(err){
+      showToast('Could not parse CSV file');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+function parseCsv(text){
+  const lines = text.split(/\r?\n/).filter(l=>l.trim().length>0);
+  if(lines.length < 2) return [];
+  const headers = splitCsvLine(lines[0]).map(h=>h.trim().toLowerCase());
+  const rows = [];
+  for(let i=1;i<lines.length;i++){
+    const vals = splitCsvLine(lines[i]);
+    const row = {};
+    headers.forEach((h,idx)=>{ row[h] = vals[idx] !== undefined ? vals[idx].trim() : ''; });
+    rows.push(row);
+  }
+  return rows;
+}
+function splitCsvLine(line){
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for(let i=0;i<line.length;i++){
+    const ch = line[i];
+    if(inQuotes){
+      if(ch === '"'){
+        if(line[i+1] === '"'){ cur+='"'; i++; }
+        else { inQuotes = false; }
+      } else { cur += ch; }
+    } else {
+      if(ch === '"'){ inQuotes = true; }
+      else if(ch === ','){ result.push(cur); cur=''; }
+      else { cur += ch; }
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+/* =========================================================
+   SETTINGS MODAL
+   ========================================================= */
+function openSettingsModal(){
+  renderDebtAccountsManager();
+  renderSubcategoryManager();
+  document.getElementById('settingsModalOverlay').classList.add('active');
+}
+function closeSettingsModal(){
+  document.getElementById('settingsModalOverlay').classList.remove('active');
+}
+document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
+document.getElementById('settingsModalClose').addEventListener('click', closeSettingsModal);
+document.getElementById('settingsModalOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'settingsModalOverlay') closeSettingsModal();
+});
+
+/* =========================================================
+   DEBT ACCOUNTS MANAGER (Settings)
+   ========================================================= */
+function renderDebtAccountsManager(){
+  const container = document.getElementById('debtAccountsManager');
+  let html = '';
+  DEBT_TYPES.forEach(type=>{
+    const accounts = DEBT_ACCOUNTS[type] || [];
+    const chips = accounts.map(acc=>`
+      <div class="account-chip">
+        <span>${acc}</span>
+        <button type="button" data-type="${type}" data-account="${acc}" class="remove-account-btn" title="Remove">&times;</button>
+      </div>
+    `).join('');
+    html += `
+      <div class="debt-type-group">
+        <div class="type-label">${type}</div>
+        <div class="account-chip-list">${chips || '<span class="muted">No accounts added yet.</span>'}</div>
+        <div class="account-add-row">
+          <input type="text" placeholder="e.g. Tangerine 7177" data-type="${type}" class="new-account-input">
+          <button type="button" data-type="${type}" class="add-account-btn">Add</button>
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+
+  container.querySelectorAll('.add-account-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const type = btn.dataset.type;
+      const input = container.querySelector(`.new-account-input[data-type="${type}"]`);
+      const name = input.value.trim();
+      if(!name) return;
+      if(!DEBT_ACCOUNTS[type].includes(name)){
+        DEBT_ACCOUNTS[type].push(name);
+        saveState();
+      }
+      input.value = '';
+      renderDebtAccountsManager();
+    });
+  });
+
+  container.querySelectorAll('.new-account-input').forEach(input=>{
+    input.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        container.querySelector(`.add-account-btn[data-type="${input.dataset.type}"]`).click();
+      }
+    });
+  });
+
+  container.querySelectorAll('.remove-account-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const type = btn.dataset.type;
+      const account = btn.dataset.account;
+      DEBT_ACCOUNTS[type] = DEBT_ACCOUNTS[type].filter(a=>a!==account);
+      saveState();
+      renderDebtAccountsManager();
+    });
+  });
+}
+
+/* =========================================================
+   SUBCATEGORY MANAGER (Settings)
+   ========================================================= */
+let subcatManagerCategory = 'Income';
+
+document.getElementById('subcatCategorySeg').querySelectorAll('button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.getElementById('subcatCategorySeg').querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    subcatManagerCategory = btn.dataset.cat;
+    renderSubcategoryManager();
+  });
+});
+
+function renderSubcategoryManager(){
+  const container = document.getElementById('subcategoryManager');
+  const cat = subcatManagerCategory;
+  const subs = CATEGORY_MAP[cat];
+
+  const chips = subs.map(sub=>`
+    <div class="account-chip" data-sub="${sub}">
+      <span class="chip-label">${sub}</span>
+      <button type="button" class="edit-btn" data-action="edit" data-sub="${sub}" title="Rename">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button type="button" data-action="delete" data-sub="${sub}" title="Delete">&times;</button>
+    </div>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="account-chip-list">${chips || '<span class="muted">No subcategories yet.</span>'}</div>
+    <div class="account-add-row">
+      <input type="text" placeholder="New subcategory name" id="newSubcatInput">
+      <button type="button" id="addSubcatBtn">Add</button>
+    </div>
+  `;
+
+  container.querySelectorAll('[data-action="edit"]').forEach(btn=>{
+    btn.addEventListener('click', ()=> startSubcategoryRename(btn.closest('.account-chip'), btn.dataset.sub));
+  });
+  container.querySelectorAll('[data-action="delete"]').forEach(btn=>{
+    btn.addEventListener('click', ()=> deleteSubcategory(btn.dataset.sub));
+  });
+
+  const addBtn = document.getElementById('addSubcatBtn');
+  const addInput = document.getElementById('newSubcatInput');
+  addBtn.addEventListener('click', ()=> addSubcategory(addInput.value));
+  addInput.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.preventDefault(); addSubcategory(addInput.value); }
+  });
+}
+
+function addSubcategory(name){
+  name = (name || '').trim();
+  if(!name){ return; }
+  const cat = subcatManagerCategory;
+  if(CATEGORY_MAP[cat].some(s=>s.toLowerCase() === name.toLowerCase())){
+    showToast('That subcategory already exists');
+    return;
+  }
+  CATEGORY_MAP[cat].push(name);
+  saveState();
+  showToast('Subcategory added');
+  renderSubcategoryManager();
+}
+
+function startSubcategoryRename(chipEl, oldName){
+  const cat = subcatManagerCategory;
+  chipEl.innerHTML = `
+    <input type="text" class="rename-input" value="${oldName}">
+    <button type="button" data-action="confirm-rename" title="Save">&#10003;</button>
+    <button type="button" data-action="cancel-rename" title="Cancel">&times;</button>
+  `;
+  const input = chipEl.querySelector('.rename-input');
+  input.focus();
+  input.select();
+
+  function commit(){
+    const newName = input.value.trim();
+    if(!newName || newName === oldName){ renderSubcategoryManager(); return; }
+    if(CATEGORY_MAP[cat].some(s=>s.toLowerCase() === newName.toLowerCase() && s.toLowerCase() !== oldName.toLowerCase())){
+      showToast('That subcategory already exists');
+      return;
+    }
+    renameSubcategory(oldName, newName);
+  }
+
+  chipEl.querySelector('[data-action="confirm-rename"]').addEventListener('click', commit);
+  chipEl.querySelector('[data-action="cancel-rename"]').addEventListener('click', ()=> renderSubcategoryManager());
+  input.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){ e.preventDefault(); commit(); }
+    if(e.key === 'Escape'){ e.preventDefault(); renderSubcategoryManager(); }
+  });
+}
+
+function renameSubcategory(oldName, newName){
+  const cat = subcatManagerCategory;
+  const idx = CATEGORY_MAP[cat].indexOf(oldName);
+  if(idx === -1) return;
+  CATEGORY_MAP[cat][idx] = newName;
+
+  // update detail view selection if needed
+  if(detailCategory === cat && detailSubcategory === oldName){ detailSubcategory = newName; }
+
+  // update all existing entries referencing the old subcategory name
+  let updated = 0;
+  entries.forEach(e=>{
+    if(e.category === cat && e.subcategory === oldName){
+      e.subcategory = newName;
+      updated++;
+    }
+  });
+
+  saveState();
+  showToast(updated > 0 ? `Renamed (${updated} entries updated)` : 'Subcategory renamed');
+  renderSubcategoryManager();
+  renderCurrentView(getActiveViewName());
+}
+
+function deleteSubcategory(name){
+  const cat = subcatManagerCategory;
+  if(CATEGORY_MAP[cat].length <= 1){
+    showToast('A category needs at least one subcategory');
+    return;
+  }
+  const inUseCount = entries.filter(e=>e.category===cat && e.subcategory===name).length;
+  const fallback = CATEGORY_MAP[cat].find(s=>s !== name) || 'Other';
+
+  const message = inUseCount > 0
+    ? `"${name}" is used by ${inUseCount} entr${inUseCount===1?'y':'ies'}. They will be moved to "${fallback}". This cannot be undone.`
+    : `Delete "${name}"? This cannot be undone.`;
+
+  showConfirm('Delete subcategory?', message, ()=>{
+    // reassign any entries using this subcategory
+    entries.forEach(e=>{
+      if(e.category === cat && e.subcategory === name){ e.subcategory = fallback; }
+    });
+    CATEGORY_MAP[cat] = CATEGORY_MAP[cat].filter(s=>s!==name);
+
+    if(detailCategory === cat && detailSubcategory === name){ detailSubcategory = CATEGORY_MAP[cat][0]; }
+
+    saveState();
+    showToast('Subcategory deleted');
+    renderSubcategoryManager();
+    renderCurrentView(getActiveViewName());
+  });
+}
+
+
+/* =========================================================
+   CUSTOM CONFIRM MODAL (avoids window.confirm, which is blocked in some sandboxed iframes)
+   ========================================================= */
+function showConfirm(title, message, onConfirm){
+  const overlay = document.getElementById('confirmModalOverlay');
+  document.getElementById('confirmModalTitle').textContent = title;
+  document.getElementById('confirmModalMessage').textContent = message;
+  overlay.classList.add('active');
+
+  const confirmBtn = document.getElementById('confirmModalConfirm');
+  const cancelBtn = document.getElementById('confirmModalCancel');
+
+  function cleanup(){
+    overlay.classList.remove('active');
+    confirmBtn.removeEventListener('click', onConfirmClick);
+    cancelBtn.removeEventListener('click', onCancelClick);
+  }
+  function onConfirmClick(){ cleanup(); onConfirm(); }
+  function onCancelClick(){ cleanup(); }
+
+  confirmBtn.addEventListener('click', onConfirmClick);
+  cancelBtn.addEventListener('click', onCancelClick);
+}
+document.getElementById('confirmModalOverlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'confirmModalOverlay'){
+    e.target.classList.remove('active');
+  }
+});
+
+document.getElementById('emptyDataBtn').addEventListener('click', ()=>{
+  showConfirm('Empty all data?', 'This will permanently delete all your entries. This cannot be undone.', ()=>{
+    entries = [];
+    nextId = 1;
+    saveState();
+    showToast('All data cleared');
+    closeSettingsModal();
+    switchView('home');
+  });
+});
+
+document.getElementById('resetDataBtn').addEventListener('click', ()=>{
+  showConfirm('Reset to sample data?', 'This will replace all current data with sample data.', ()=>{
+    nextId = 1;
+    entries = buildSampleData();
+    SETTINGS = {taxRate:0, netAdj:0, expAdj:0, invAdj:0, balAdj:0};
+    saveState();
+    showToast('Sample data restored');
+    closeSettingsModal();
+    switchView('home');
+  });
+});
+
+/* =========================================================
+   APP INITIALIZATION
+   ========================================================= */
+function init(){
+  const hadStoredData = loadState();
+  if(!hadStoredData){
+    entries = buildSampleData();
+    saveState();
+  }
+  populateEntryCategorySelectors('Income', CATEGORY_MAP.Income[0]);
+  populateDetailSelectors();
+  switchView('home');
+}
+
+init();
+
+function renderDebts(){
+  const types = debtTypeFilter === 'All' ? DEBT_TYPES : [debtTypeFilter];
+  let list = entries.filter(e=>e.category==='Expense');
+
+  if(debtFilter !== 'Both'){
+    list = list.filter(e=>e.status === debtFilter);
+  }
+
+  if(debtTypeFilter !== 'All'){
+    list = list.filter(e=> (e.type || 'Other') === debtTypeFilter);
+  }
+
+  // Hide entries that are type "Other" with no account assigned (empty/None)
+  list = list.filter(e=> !((e.type || 'Other') === 'Other' && !e.account));
+
+  if(debtSearchQuery.trim() !== ''){
+    const q = debtSearchQuery.trim().toLowerCase();
+    list = list.filter(e=>{
+      const fields = [e.subcategory, e.notes, e.type, e.account, String(e.amount), e.date];
+      return fields.some(f=> f && String(f).toLowerCase().includes(q));
+    });
+  }
+
+  const groups = {};
+  types.forEach(t=>groups[t]=[]);
+  list.forEach(e=>{
+    const t = e.type || 'Other';
+    if(!groups[t]) groups[t] = [];
+    groups[t].push(e);
+  });
+
+  let html = '';
+  let anyData = false;
+  types.forEach(type=>{
+    const rows = groups[type] || [];
+    if(rows.length === 0) return;
+    anyData = true;
+    rows.sort((a,b)=> new Date(b.date) - new Date(a.date));
+    const total = rows.reduce((a,e)=>a+Number(e.amount),0);
+    const openTotal = rows.filter(e=>e.status==='Open').reduce((a,e)=>a+Number(e.amount),0);
+
+    const accountsForType = DEBT_ACCOUNTS[type] || [];
+    let bodyHtml;
+    if(accountsForType.length > 0){
+      // Sub-group rows by account; entries with no account go under "Unassigned"
+      const acctGroups = {};
+      const acctOrder = [];
+      rows.forEach(e=>{
+        const key = e.account || 'Unassigned';
+        if(!acctGroups[key]){ acctGroups[key] = []; acctOrder.push(key); }
+        acctGroups[key].push(e);
+      });
+      // order: defined accounts first (in DEBT_ACCOUNTS order), then Unassigned
+      const orderedKeys = accountsForType.filter(a=>acctGroups[a]).concat(acctOrder.filter(k=>!accountsForType.includes(k)));
+      bodyHtml = orderedKeys.map(key=>{
+        const acctRows = acctGroups[key];
+        const acctTotal = acctRows.reduce((a,e)=>a+Number(e.amount),0);
+        return `
+          <div class="group-header" style="margin-top:12px;font-size:14px;display:flex;justify-content:space-between;">
+            <span>${key}</span>
+            <span class="muted" style="font-family:'Inter',sans-serif;font-weight:600;">${fmtMoney(acctTotal)}</span>
+          </div>
+          <ul class="entry-list">${acctRows.map(e=>renderEntryRow(e)).join('')}</ul>
+        `;
+      }).join('');
+    } else {
+      bodyHtml = `<ul class="entry-list">${rows.map(e=>renderEntryRow(e)).join('')}</ul>`;
+    }
+
+    html += `
+      <div class="card">
+        <div class="card-title">
+          <span>${type}</span>
+          <span class="muted" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:600;">${fmtMoney(total)} total</span>
+        </div>
+        <div class="muted" style="margin-bottom:8px;">Open: ${fmtMoney(openTotal)}</div>
+        ${bodyHtml}
+      </div>
+    `;
+  });
+
+  if(!anyData){
+    html = `<div class="empty-state"><div class="big">💳</div>No debt entries match this filter.</div>`;
+  }
+
+  document.getElementById('debtList').innerHTML = html;
+  attachEntryRowHandlers(document.getElementById('debtList'));
+}
+function renderTransactions(){
+  let list = entries.slice();
+
+  if(txFilter !== 'Both'){
+    list = list.filter(e=>e.status === txFilter);
+  }
+
+  // Period filter
+  if(txPeriod !== 'all'){
+    const now = new Date();
+    let from, to;
+    if(txPeriod === 'thismonth'){
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      to   = new Date(now.getFullYear(), now.getMonth()+1, 0);
+    } else if(txPeriod === 'lastmonth'){
+      from = new Date(now.getFullYear(), now.getMonth()-1, 1);
+      to   = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else if(txPeriod === 'thisyear'){
+      from = new Date(now.getFullYear(), 0, 1);
+      to   = new Date(now.getFullYear(), 11, 31);
+    } else if(txPeriod === 'custom'){
+      from = txDateFrom ? parseLocalDate(txDateFrom) : null;
+      to   = txDateTo   ? parseLocalDate(txDateTo)   : null;
+    }
+    list = list.filter(e=>{
+      const d = parseLocalDate(e.date);
+      if(from && d < from) return false;
+      if(to   && d > to  ) return false;
+      return true;
+    });
+  }
+
+  if(txSearchQuery.trim() !== ''){
+    const q = txSearchQuery.trim().toLowerCase();
+    list = list.filter(e=>{
+      const fields = [
+        e.category, e.subcategory, e.notes, e.type, e.account, e.status,
+        String(e.amount), e.date
+      ];
+      return fields.some(f=> f && String(f).toLowerCase().includes(q));
+    });
+  }
+
+  // Sort by user-selected direction
+  list.sort((a,b)=> txSortAsc
+    ? parseLocalDate(a.date) - parseLocalDate(b.date)   // oldest → newest
+    : parseLocalDate(b.date) - parseLocalDate(a.date)   // newest → oldest
+  );
+
+  if(list.length === 0){
+    const msg = txSearchQuery.trim() !== '' ? 'No transactions match your search.' : 'No transactions match this filter.';
+    document.getElementById('txList').innerHTML = `<div class="empty-state"><div class="big">📋</div>${msg}</div>`;
+    return;
+  }
+
+  // Group by month, preserving overall order within group
+  const groups = {};
+  const groupOrder = [];
+  list.forEach(e=>{
+    const d = parseLocalDate(e.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if(!groups[key]){ groups[key] = []; groupOrder.push(key); }
+    groups[key].push(e);
+  });
+
+  // For "Both"/oldest-first overall but groups should appear oldest month first too
+  // For "Closed" sorting (newest->oldest), groups should appear newest month first
+  if(!txSortAsc){
+    groupOrder.sort((a,b)=> b.localeCompare(a)); // newest month first
+  } else {
+    groupOrder.sort((a,b)=> a.localeCompare(b)); // oldest month first
+  }
+
+  let html = '';
+  groupOrder.forEach(key=>{
+    const [y,m] = key.split('-');
+    const label = new Date(Number(y), Number(m)-1, 1).toLocaleString(undefined,{month:'long', year:'numeric'});
+    const rows = groups[key].map(e=>renderEntryRow(e)).join('');
+    html += `<div class="group-header">${label}</div><div class="card"><ul class="entry-list">${rows}</ul></div>`;
+  });
+
+  document.getElementById('txList').innerHTML = html;
+  attachEntryRowHandlers(document.getElementById('txList'));
+}
+function populateDetailSelectors(){
+  const catSel = document.getElementById('detailCategorySel');
+  catSel.innerHTML = Object.keys(CATEGORY_MAP).map(c=>`<option value="${c}" ${c===detailCategory?'selected':''}>${c}</option>`).join('');
+
+  const subSel = document.getElementById('detailSubcatSel');
+  subSel.innerHTML = CATEGORY_MAP[detailCategory].map(s=>`<option value="${s}" ${s===detailSubcategory?'selected':''}>${s}</option>`).join('');
+}
+
+function openDetail(category, subcategory){
+  detailCategory = category;
+  detailSubcategory = subcategory;
+  populateDetailSelectors();
+  renderDetail();
+  switchView('detail');
+}
+
+function renderDetail(){
+  const matching = entries.filter(e=>e.category===detailCategory && e.subcategory===detailSubcategory)
+    .sort((a,b)=> new Date(b.date) - new Date(a.date));
+
+  const open = matching.filter(e=>e.status==='Open');
+  const closed = matching.filter(e=>e.status==='Closed');
+
+  function renderGroup(title, list){
+    if(list.length===0) return `<div class="group-header">${title}</div><div class="empty-state" style="padding:16px;"><span class="muted">No entries.</span></div>`;
+    const rows = list.map(e=>renderEntryRow(e)).join('');
+    return `<div class="group-header">${title}</div><ul class="entry-list">${rows}</ul>`;
+  }
+
+  document.getElementById('detailLists').innerHTML = `
+    <div class="card">${renderGroup('Open', open)}</div>
+    <div class="card">${renderGroup('Closed', closed)}</div>
+  `;
+  attachEntryRowHandlers(document.getElementById('detailLists'));
+}
+
+/* shared entry row renderer (used in detail + transactions + debts) */
+function renderEntryRow(e){
+  const isExpense = e.category === 'Expense';
+  const amt = Number(e.amount);
+  const dotColor = CATEGORY_COLORS[e.category];
+  const dateLabel = parseLocalDate(e.date).toLocaleDateString(undefined,{month:'short', day:'numeric'});
+  let metaText = `${dateLabel} · ${e.category}`;
+  if(isExpense && e.type){ metaText += ` · ${e.type}`; }
+  if(isExpense && e.account){ metaText += ` · ${e.account}`; }
+  if(e.notes){ metaText += ` · ${e.notes}`; }
+
+  // Determine display sign and color based on the NET effect on balance:
+  // Income positive → green +, Income negative → red -
+  // Expense positive → red -, Expense negative (cashback) → green +
+  // Investment positive → gold -, Investment negative (withdrawal) → green +
+  // Capital positive → green +, Capital negative (loss) → red -
+  let displayAmt, amtClass;
+  if(e.category === 'Income'){
+    displayAmt = (amt >= 0 ? '+' : '') + fmtMoney(amt);
+    amtClass = amt >= 0 ? 'pos' : 'neg';
+  } else if(e.category === 'Expense'){
+    if(amt >= 0){
+      displayAmt = '-' + fmtMoney(amt);
+      amtClass = 'neg';
+    } else {
+      // negative expense = cashback → positive effect on balance
+      displayAmt = '+' + fmtMoney(Math.abs(amt)) + ' ↩';
+      amtClass = 'pos';
+    }
+  } else if(e.category === 'Investment'){
+    if(amt >= 0){
+      displayAmt = '-' + fmtMoney(amt);
+      amtClass = 'neg';
+    } else {
+      // negative investment = withdrawal → positive effect on balance
+      displayAmt = '+' + fmtMoney(Math.abs(amt)) + ' ↩';
+      amtClass = 'pos';
+    }
+  } else {
+    // Capital
+    displayAmt = (amt >= 0 ? '+' : '') + fmtMoney(amt);
+    amtClass = amt >= 0 ? 'pos' : 'neg';
+  }
+
+  return `
+    <li class="entry-row" data-id="${e.id}">
+      <div class="entry-main">
+        <div class="entry-dot" style="background:${dotColor}"></div>
+        <div class="entry-info">
+          <div class="sub">${e.subcategory}</div>
+          <div class="meta">${metaText}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;">
+        <div class="entry-amt ${amtClass}">${displayAmt}</div>
+        <span class="status-badge ${e.status.toLowerCase()}">${e.status}</span>
+      </div>
+    </li>
+  `;
+}
+function attachEntryRowHandlers(container){
+  container.querySelectorAll('.entry-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const id = Number(row.dataset.id);
+      openEntryModal(id);
+    });
+  });
+}
+function renderHome(){
+  document.getElementById('homeMonthLabel').textContent = fmtMonthYear(homeDate);
+
+  const proj = computeMonthFinancials(homeDate, false);
+  const cash = computeMonthFinancials(homeDate, true);
+
+  const balFig = document.getElementById('homeBalanceFig');
+  balFig.textContent = fmtMoney(cash.balance);
+  balFig.classList.toggle('negative', cash.balance < 0);
+
+  document.getElementById('sumGross').textContent = fmtMoney(proj.grossIncome);
+  document.getElementById('sumNet').textContent = fmtMoney(proj.netIncome);
+  document.getElementById('sumExpenses').textContent = fmtMoney(proj.expensesNoTaxes);
+  document.getElementById('sumInvestment').textContent = fmtMoney(proj.investment);
+  document.getElementById('sumTaxes').textContent = fmtMoney(proj.taxes);
+
+  const balEl = document.getElementById('sumBalance');
+  balEl.textContent = fmtMoney(proj.balance);
+  balEl.classList.remove('pos','neg');
+  balEl.classList.add(proj.balance >= 0 ? 'pos' : 'neg');
+
+  renderLineChart();
+  renderDonutChart();
+}
+
+function renderLineChart(){
+  const {labels, values} = computeDailyCashflow(homeDate);
+  const ctx = document.getElementById('lineChart');
+  if(lineChartInstance){ lineChartInstance.destroy(); }
+  lineChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Balance',
+        data: values,
+        borderColor: '#0F1B2D',
+        backgroundColor: 'rgba(212,162,78,0.15)',
+        fill: true,
+        tension: 0.35,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointBackgroundColor: '#D4A24E',
+        pointHoverBackgroundColor: '#D4A24E',
+        pointHoverBorderColor: '#0F1B2D',
+        pointHoverBorderWidth: 2,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+        axis: 'x'
+      },
+      plugins: {
+        legend: {display: false},
+        tooltip: {
+          backgroundColor: '#0F1B2D',
+          titleColor: '#F7F4EF',
+          titleFont: {family:"'Fraunces', serif", size:13, weight:'600'},
+          bodyColor: '#F7F4EF',
+          bodyFont: {family:"'Inter', sans-serif", size:13, weight:'700'},
+          padding: 10,
+          cornerRadius: 8,
+          displayColors: false,
+          callbacks:{
+            title: (items) => 'Day ' + items[0].label,
+            label: (ctx)   => fmtMoney(ctx.parsed.y)
+          }
+        }
+      },
+      scales: {
+        x: {grid:{display:false}, ticks:{maxTicksLimit:8, font:{size:10}, color:'#5C6B7A'}},
+        y: {grid:{color:'#E3DFD6'}, ticks:{display:false}}
+      }
+    }
+  });
+}
+
+function renderDonutChart(){
+  const rows = computeDonutBreakdown(homeDate, donutCategory);
+  const ctx = document.getElementById('donutChart');
+  if(donutChartInstance){ donutChartInstance.destroy(); }
+
+  if(rows.length === 0){
+    document.getElementById('donutBreakdownList').innerHTML = '<div class="empty-state"><div class="big">∅</div>No ' + donutCategory.toLowerCase() + ' entries this month.</div>';
+    donutChartInstance = new Chart(ctx, {
+      type:'doughnut',
+      data:{labels:['No data'], datasets:[{data:[1], backgroundColor:['#E7EAED'], borderWidth:0}]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{enabled:false}}, cutout:'68%'}
+    });
+    return;
+  }
+
+  donutChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: rows.map(r=>r.subcategory),
+      datasets: [{
+        data: rows.map(r=>Math.abs(r.amount)),
+        backgroundColor: rows.map((_,i)=>PALETTE[i % PALETTE.length]),
+        borderWidth: 2,
+        borderColor: '#F7F4EF'
+      }]
+    },
+    options: {
+      responsive:true,
+      maintainAspectRatio:false,
+      cutout:'68%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label: (ctx)=>{
+              const row = rows[ctx.dataIndex];
+              return `${row.subcategory}: ${fmtMoney(row.amount)} (${row.pct.toFixed(1)}% of gross)`;
+            }
+          }
+        }
+      },
+      onClick: (evt, elements)=>{
+        if(elements.length){
+          const row = rows[elements[0].index];
+          openDetail(donutCategory, row.subcategory);
+        }
+      }
+    }
+  });
+
+  // breakdown list
+  const listHtml = rows.map((r,i)=>`
+    <div class="breakdown-row" data-sub="${r.subcategory}">
+      <div class="breakdown-left">
+        <div class="breakdown-swatch" style="background:${PALETTE[i % PALETTE.length]}"></div>
+        <div class="breakdown-name">${r.subcategory}</div>
+      </div>
+      <div class="breakdown-right">
+        <div class="breakdown-amt">${fmtMoney(r.amount)}</div>
+        <div class="breakdown-pct">${r.pct.toFixed(1)}% of gross</div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('donutBreakdownList').innerHTML = listHtml;
+  document.querySelectorAll('#donutBreakdownList .breakdown-row').forEach(row=>{
+    row.addEventListener('click', ()=> openDetail(donutCategory, row.dataset.sub));
+  });
+}
+</script>
+</body>
+</html>

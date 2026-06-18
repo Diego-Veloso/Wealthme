@@ -463,6 +463,28 @@ main{
 .csv-row{display:flex;gap:10px;margin-top:10px;}
 .csv-row .btn{flex:1;font-size:13px;padding:10px;}
 .hidden-input{display:none;}
+/* ===== Toggle switch ===== */
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:10px;padding:11px 12px;height:46px;
+}
+.toggle-label{font-size:14px;font-weight:600;color:var(--navy);}
+.toggle-switch{position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-thumb{
+  position:absolute;inset:0;
+  background:var(--slate-light);border-radius:26px;
+  cursor:pointer;transition:background .2s;
+}
+.toggle-thumb::before{
+  content:'';position:absolute;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.2);
+  left:3px;top:3px;transition:transform .2s;
+}
+.toggle-switch input:checked + .toggle-thumb{background:var(--sage);}
+.toggle-switch input:checked + .toggle-thumb::before{transform:translateX(18px);}
 .cat-tag{
   font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
   padding:3px 8px;border-radius:7px;
@@ -752,7 +774,7 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
 
       <!-- Subcategory breakdown -->
       <div class="card">
-        <div class="card-title">By Subcategory</div>
+        <div class="card-title">By Investment</div>
         <div id="moneyBreakdown"></div>
       </div>
 
@@ -767,7 +789,7 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
 
       <!-- All-time breakdown by subcategory -->
       <div class="card">
-        <div class="card-title">All-Time by Subcategory</div>
+        <div class="card-title">All-Time by Investment</div>
         <div id="moneyAllTimeBreakdown"></div>
       </div>
     </section>
@@ -828,10 +850,13 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
         </div>
         <div class="field">
           <label>Status</label>
-          <select id="entryStatus">
-            <option value="Open">Open</option>
-            <option value="Closed">Closed</option>
-          </select>
+          <div class="toggle-row">
+            <span class="toggle-label" id="entryStatusLabel">Open</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="entryStatusToggle">
+              <span class="toggle-thumb"></span>
+            </label>
+          </div>
         </div>
       </div>
       <div class="field">
@@ -898,7 +923,7 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
         <button class="btn btn-danger" id="emptyDataBtn" style="flex:1;">Empty All Data</button>
         <button class="btn btn-secondary" id="resetDataBtn" style="flex:1;">Reset to Sample Data</button>
       </div>
-      <p class="muted" style="text-align:center;margin-top:16px;font-size:11px;">Build 2026.06.15-debtaccounts-v2</p>
+      <p class="muted" style="text-align:center;margin-top:16px;font-size:11px;">Wealth.Me · Version 1.0</p>
     </div>
   </div>
 
@@ -1422,18 +1447,6 @@ function renderMoneyLineChart(){
           pointHoverBackgroundColor: '#5C6B7A',
           borderWidth: 2,
           borderDash: [5, 4]
-        },
-        {
-          label: 'Net (Invested + Capital)',
-          data: netData,
-          borderColor: '#3E7C59',
-          backgroundColor: 'transparent',
-          fill: false,
-          tension: 0.35,
-          pointRadius: 0,
-          pointHoverRadius: 5,
-          pointHoverBackgroundColor: '#3E7C59',
-          borderWidth: 2
         }
       ]
     },
@@ -1455,7 +1468,7 @@ function renderMoneyLineChart(){
       },
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#5C6B7A' } },
-        y: { grid: { color: '#E3DFD6' }, ticks: { font: { size: 10 }, color: '#5C6B7A', callback: (v) => '$' + v.toLocaleString() } }
+        y: { grid: { color: '#E3DFD6' }, ticks: { display: false } }
       }
     }
   });
@@ -1751,6 +1764,16 @@ document.getElementById('entryType').addEventListener('change', (e)=>{
   populateEntryAccountSelector(e.target.value, null);
 });
 
+function setStatusToggle(status){
+  const isClosed = status === 'Closed';
+  document.getElementById('entryStatusToggle').checked = isClosed;
+  document.getElementById('entryStatusLabel').textContent = isClosed ? 'Closed' : 'Open';
+}
+
+document.getElementById('entryStatusToggle').addEventListener('change', (e)=>{
+  document.getElementById('entryStatusLabel').textContent = e.target.checked ? 'Closed' : 'Open';
+});
+
 function openEntryModal(id){
   const overlay = document.getElementById('entryModalOverlay');
   const title = document.getElementById('entryModalTitle');
@@ -1765,7 +1788,7 @@ function openEntryModal(id){
     document.getElementById('entryDate').value = entry.date;
     populateEntryCategorySelectors(entry.category, entry.subcategory);
     document.getElementById('entryAmount').value = entry.amount;
-    document.getElementById('entryStatus').value = entry.status;
+    setStatusToggle(entry.status);
     document.getElementById('entryNotes').value = entry.notes || '';
     if(entry.category === 'Expense'){
       const t = entry.type || 'Other';
@@ -1780,7 +1803,7 @@ function openEntryModal(id){
     document.getElementById('entryDate').value = formatLocalDate(today);
     populateEntryCategorySelectors('Income', CATEGORY_MAP.Income[0]);
     document.getElementById('entryAmount').value = '';
-    document.getElementById('entryStatus').value = 'Open'; // default per spec
+    setStatusToggle('Open'); // default Open
     document.getElementById('entryNotes').value = '';
     document.getElementById('entryType').value = 'Other';
   }
@@ -1802,7 +1825,7 @@ document.getElementById('entrySaveBtn').addEventListener('click', ()=>{
   const category = document.getElementById('entryCategory').value;
   const subcategory = document.getElementById('entrySubcategory').value;
   const amount = parseFloat(document.getElementById('entryAmount').value);
-  const status = document.getElementById('entryStatus').value;
+  const status = document.getElementById('entryStatusToggle').checked ? 'Closed' : 'Open';
   const notes = document.getElementById('entryNotes').value.trim();
   const type = document.getElementById('entryType').value;
   const account = document.getElementById('entryAccount').value;
@@ -2366,6 +2389,9 @@ function renderDebts(){
   if(debtTypeFilter !== 'All'){
     list = list.filter(e=> (e.type || 'Other') === debtTypeFilter);
   }
+
+  // Hide entries that are type "Other" with no account assigned (empty/None)
+  list = list.filter(e=> !((e.type || 'Other') === 'Other' && !e.account));
 
   if(debtSearchQuery.trim() !== ''){
     const q = debtSearchQuery.trim().toLowerCase();

@@ -559,6 +559,24 @@ table.breakdown-table th{
 table.breakdown-table th:first-child,table.breakdown-table td:first-child{text-align:left;}
 table.breakdown-table td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:right;font-weight:600;}
 table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
+/* ===== Accordion ===== */
+.accordion{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:10px;}
+.accordion-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 14px;cursor:pointer;background:var(--card);
+  font-weight:600;font-size:14px;user-select:none;
+}
+.accordion-header:active{background:var(--slate-light);}
+.accordion-arrow{
+  transition:transform .25s;color:var(--slate);flex-shrink:0;
+}
+.accordion-header.open .accordion-arrow{transform:rotate(180deg);}
+.accordion-body{
+  display:none;padding:14px;border-top:1px solid var(--line);background:var(--card);
+}
+.accordion-body.open{display:block;animation:fadeIn .2s ease;}
+.accordion-body ol{margin:0;padding-left:20px;font-size:14px;line-height:1.85;color:var(--navy);}
+.accordion-body ol li{margin-bottom:2px;}
 </style>
 </head>
 <body>
@@ -945,39 +963,72 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
 
       <div class="section-title">📱 Install as a Home Screen App</div>
 
-      <div class="field" style="margin-bottom:6px;">
-        <label>iPhone (Safari only)</label>
+      <!-- iPhone accordion -->
+      <div class="accordion">
+        <div class="accordion-header" data-target="acc-iphone">
+          <span>🍎 iPhone (Safari)</span>
+          <svg class="accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="accordion-body" id="acc-iphone">
+          <ol>
+            <li>Open this page in <strong>Safari</strong> (not Chrome or other browsers)</li>
+            <li>Tap the <strong>Share</strong> button ⎋ at the bottom of the screen</li>
+            <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+            <li>Tap <strong>"Add"</strong> in the top right corner</li>
+            <li>Wealth.Me will appear on your home screen like a native app, opening fullscreen with no browser bar</li>
+          </ol>
+          <p class="muted" style="font-size:12px;margin-top:10px;margin-bottom:0;">⚠️ Must use Safari — Chrome on iPhone does not support Add to Home Screen as a PWA.</p>
+        </div>
       </div>
-      <ol style="margin:0 0 16px;padding-left:20px;font-size:14px;line-height:1.8;color:var(--navy);">
-        <li>Open this page in <strong>Safari</strong> (not Chrome)</li>
-        <li>Tap the <strong>Share</strong> button <span style="font-size:16px;">⎋</span> at the bottom of the screen</li>
-        <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
-        <li>Tap <strong>"Add"</strong> in the top right corner</li>
-        <li>Wealth.Me will appear on your home screen like a native app</li>
-      </ol>
 
-      <div class="field" style="margin-bottom:6px;">
-        <label>Android (Chrome)</label>
+      <!-- Android accordion -->
+      <div class="accordion">
+        <div class="accordion-header" data-target="acc-android">
+          <span>🤖 Android (Chrome)</span>
+          <svg class="accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="accordion-body" id="acc-android">
+          <ol>
+            <li>Open this page in <strong>Chrome</strong></li>
+            <li>Tap the <strong>three-dot menu</strong> ⋮ in the top right corner</li>
+            <li>Tap <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong></li>
+            <li>Tap <strong>"Add"</strong> to confirm</li>
+            <li>Wealth.Me will appear on your home screen like a native app, opening fullscreen</li>
+          </ol>
+          <p class="muted" style="font-size:12px;margin-top:10px;margin-bottom:0;">💡 Tip: If you host the app on GitHub Pages (<strong>diego-veloso.github.io/wealthme</strong>), Chrome will show an automatic install banner at the bottom of the screen.</p>
+        </div>
       </div>
-      <ol style="margin:0 0 16px;padding-left:20px;font-size:14px;line-height:1.8;color:var(--navy);">
-        <li>Open this page in <strong>Chrome</strong></li>
-        <li>Tap the <strong>three-dot menu</strong> ⋮ in the top right</li>
-        <li>Tap <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong></li>
-        <li>Tap <strong>"Add"</strong> to confirm</li>
-        <li>Wealth.Me will appear on your home screen like a native app</li>
-      </ol>
 
-      <div class="section-title">💾 Keeping Your Data Safe</div>
-      <p class="muted" style="font-size:13px;line-height:1.7;margin-bottom:8px;">Your data is stored locally in your browser. It stays as long as you always open the app from the same browser.</p>
-      <p class="muted" style="font-size:13px;line-height:1.7;margin-bottom:16px;"><strong style="color:var(--navy);">Important:</strong> Before installing a new version of the app, always go to <strong>Settings → Export CSV</strong> to back up your data, then re-import it after opening the new version.</p>
+      <div class="section-title" style="margin-top:16px;">💾 Keeping Your Data Safe</div>
 
-      <div class="section-title">📊 Importing Your Data</div>
-      <ol style="margin:0 0 16px;padding-left:20px;font-size:14px;line-height:1.8;color:var(--navy);">
-        <li>Go to <strong>Settings → Download Template</strong> to get the CSV format</li>
-        <li>Fill in the template with your data</li>
-        <li>Go to <strong>Settings → Import CSV</strong> and select your file</li>
-      </ol>
-      <p class="muted" style="font-size:12px;margin-bottom:0;">CSV columns: <code>id, date, category, subcategory, amount, status, notes, type, account</code></p>
+      <!-- Data safety accordion -->
+      <div class="accordion">
+        <div class="accordion-header" data-target="acc-data">
+          <span>Backing up &amp; updating</span>
+          <svg class="accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="accordion-body" id="acc-data">
+          <p class="muted" style="font-size:13px;line-height:1.7;margin-bottom:8px;">Your data is stored locally in your browser. It persists as long as you always open the app from the <strong>same browser</strong>.</p>
+          <p class="muted" style="font-size:13px;line-height:1.7;margin-bottom:0;"><strong style="color:var(--navy);">Before updating the app:</strong> go to <strong>Settings → Export CSV</strong> to back up your data, then re-import it after opening the new version.</p>
+        </div>
+      </div>
+
+      <!-- CSV import accordion -->
+      <div class="accordion">
+        <div class="accordion-header" data-target="acc-csv">
+          <span>📊 Importing your data</span>
+          <svg class="accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="accordion-body" id="acc-csv">
+          <ol>
+            <li>Go to <strong>Settings → Download Template</strong> to get the CSV format</li>
+            <li>Fill in the template with your data</li>
+            <li>Go to <strong>Settings → Import CSV</strong> and select your file</li>
+          </ol>
+          <p class="muted" style="font-size:12px;margin-top:10px;margin-bottom:0;">Columns: <code>id, date, category, subcategory, amount, status, notes, type, account</code></p>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -2148,6 +2199,17 @@ function closeSettingsModal(){
   document.getElementById('settingsModalOverlay').classList.remove('active');
 }
 /* Help / Instructions modal */
+/* Accordion toggles in help modal */
+document.querySelectorAll('.accordion-header').forEach(header=>{
+  header.addEventListener('click', ()=>{
+    const targetId = header.dataset.target;
+    const body = document.getElementById(targetId);
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    header.classList.toggle('open', !isOpen);
+  });
+});
+
 document.getElementById('helpBtn').addEventListener('click', ()=>{
   document.getElementById('helpModalOverlay').classList.add('active');
 });

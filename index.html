@@ -745,7 +745,6 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
         <button data-type="All" style="font-size:11px;min-width:64px;">All Types</button>
         <button class="active" data-type="Credit Card" style="font-size:11px;min-width:64px;">Credit Card</button>
         <button data-type="Financing" style="font-size:11px;min-width:64px;">Financing</button>
-        <button data-type="Mortgage" style="font-size:11px;min-width:64px;">Mortgage</button>
         <button data-type="Other" style="font-size:11px;min-width:64px;">Other</button>
       </div>
       <div id="debtList" style="margin-top:14px;"></div>
@@ -892,7 +891,6 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
         <select id="entryType">
           <option>Credit Card</option>
           <option>Financing</option>
-          <option>Mortgage</option>
           <option>Other</option>
         </select>
       </div>
@@ -1088,13 +1086,12 @@ const CATEGORY_COLORS = {
   Income:"#3E7C59", Expense:"#C1583F", Investment:"#D4A24E", Capital:"#5C6B7A"
 };
 const PALETTE = ["#3E7C59","#D4A24E","#C1583F","#5C6B7A","#7A9E7E","#E0B968","#D98C73","#8FA3B0","#2F5C46","#A6783A","#9C4632","#3E4E5E"];
-const DEBT_TYPES = ["Credit Card","Financing","Mortgage","Other"];
+const DEBT_TYPES = ["Credit Card","Financing","Other"];
 
 /* ---------- DEBT ACCOUNTS (user-defined sub-options per type) ---------- */
 let DEBT_ACCOUNTS = {
   "Credit Card": [],
   "Financing": [],
-  "Mortgage": [],
   "Other": []
 };
 
@@ -1238,7 +1235,7 @@ function buildSampleData(){
     if(m === 5){ add(`${y}-${mm}-20`, "Income", "Bonus & Commissions", 600, "Open", "Q2 bonus"); }
 
     // Expenses
-    add(`${y}-${mm}-02`, "Expense", "Home", 1450, "Closed", "Rent", "Mortgage");
+    add(`${y}-${mm}-02`, "Expense", "Home", 1450, "Closed", "Rent", "Other");
     add(`${y}-${mm}-03`, "Expense", "Groceries", 380, "Closed", "Weekly groceries", "Other");
     add(`${y}-${mm}-06`, "Expense", "Transportation", 120, "Closed", "Fuel + transit", "Other");
     add(`${y}-${mm}-08`, "Expense", "Meal & Drinks", 165, "Closed", "Dining out", "Credit Card");
@@ -2129,7 +2126,7 @@ document.getElementById('csvFileInput').addEventListener('change', (e)=>{
           notes: row.notes || ''
         };
         if(row.category === 'Expense'){
-          newEntry.type = ['Credit Card','Financing','Mortgage','Other'].includes(row.type) ? row.type : 'Other';
+          newEntry.type = ['Credit Card','Financing','Other'].includes(row.type) ? row.type : 'Other';
           if(row.account){
             newEntry.account = row.account;
             // auto-register new account names so they appear in the Account dropdown

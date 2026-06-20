@@ -2238,10 +2238,10 @@ async function syncPush(){
   syncInProgress = true;
   setSyncStatus('Pushing to Google Sheet…', 'var(--slate)');
   try{
-    const res = await fetch(syncUrl, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'write', entries }),
-    });
+    // Use GET with encoded data to avoid CORS preflight
+    const encoded = encodeURIComponent(JSON.stringify(entries));
+    const url = `${syncUrl}?action=write&data=${encoded}`;
+    const res = await fetch(url);
     const data = await res.json();
     if(data.success){
       setSyncStatus(`✓ Pushed ${data.count} entries to Sheet`, 'var(--sage)');
@@ -2261,7 +2261,7 @@ async function syncPull(){
   syncInProgress = true;
   setSyncStatus('Pulling from Google Sheet…', 'var(--slate)');
   try{
-    const res = await fetch(syncUrl + '?action=read');
+    const res = await fetch(`${syncUrl}?action=read`);
     const data = await res.json();
     if(data.entries){
       entries = data.entries.map(e=>({
@@ -2269,7 +2269,6 @@ async function syncPull(){
         id: Number(e.id) || uid(),
         amount: Number(e.amount) || 0
       }));
-      // Update nextId to avoid collisions
       const maxId = entries.reduce((a,e)=>Math.max(a,Number(e.id)||0),0);
       if(maxId >= nextId) nextId = maxId + 1;
       invalidateFinancialsCache();
@@ -2292,7 +2291,7 @@ async function syncTest(){
   if(!url){ setSyncStatus('Enter a URL first.', 'var(--terracotta)'); return; }
   setSyncStatus('Testing connection…', 'var(--slate)');
   try{
-    const res = await fetch(url + '?action=ping');
+    const res = await fetch(`${url}?action=ping`);
     const data = await res.json();
     if(data.ok){
       setSyncStatus('✓ Connected! ' + data.message, 'var(--sage)');

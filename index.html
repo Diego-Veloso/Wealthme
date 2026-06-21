@@ -2232,6 +2232,18 @@ function updateSyncBadge(){
   if(badge) badge.style.display = syncUrl ? 'flex' : 'none';
 }
 
+// Safari-safe fetch: uses no-cors for writes, regular fetch for reads
+async function safeFetch(url){
+  // Try regular fetch first; fall back messaging if blocked
+  try{
+    const res = await fetch(url);
+    const text = await res.text();
+    return JSON.parse(text);
+  } catch(err){
+    throw new Error('Load failed — check that your Script URL is correct and redeployed as "Anyone" access.');
+  }
+}
+
 async function syncPush(){
   if(!syncUrl){ setSyncStatus('No URL configured.', 'var(--terracotta)'); return; }
   if(syncInProgress){ setSyncStatus('Sync in progress...'); return; }
@@ -2239,36 +2251,26 @@ async function syncPush(){
   setSyncStatus('Pushing to Google Sheet…', 'var(--slate)');
   try{
     const payload = JSON.stringify(entries);
-    const CHUNK_SIZE = 3000; // smaller chunks for safety
+    const CHUNK_SIZE = 2000; // small chunks for Safari URL limits
     const chunks = [];
     for(let i = 0; i < payload.length; i += CHUNK_SIZE){
       chunks.push(payload.slice(i, i + CHUNK_SIZE));
     }
     const total = chunks.length;
-    setSyncStatus(`Sending ${total} chunk(s) — ${entries.length} entries…`, 'var(--slate)');
 
     for(let i = 0; i < chunks.length; i++){
       setSyncStatus(`Pushing… chunk ${i+1} of ${total}`, 'var(--slate)');
       const url = `${syncUrl}?action=chunk&index=${i}&total=${total}&data=${encodeURIComponent(chunks[i])}`;
-      let res, json;
-      try{
-        res = await fetch(url);
-        const text = await res.text();
-        try{ json = JSON.parse(text); }
-        catch(e){ setSyncStatus(`Chunk ${i+1} parse error: ${text.slice(0,120)}`, 'var(--terracotta)'); syncInProgress=false; return; }
-      } catch(fetchErr){
-        setSyncStatus(`Chunk ${i+1} fetch error: ${fetchErr.message}`, 'var(--terracotta)');
-        syncInProgress=false; return;
-      }
+      const json = await safeFetch(url);
       if(json.error){
-        setSyncStatus(`Chunk ${i+1} failed: ${json.error}`, 'var(--terracotta)');
-        syncInProgress=false; return;
+        setSyncStatus('Push failed: ' + json.error, 'var(--terracotta)');
+        syncInProgress = false; return;
       }
     }
     setSyncStatus(`✓ Pushed ${entries.length} entries to Sheet`, 'var(--sage)');
     showToast('Synced to Google Sheet');
   }catch(err){
-    setSyncStatus('Push failed: ' + err.message, 'var(--terracotta)');
+    setSyncStatus(err.message, 'var(--terracotta)');
   }
   syncInProgress = false;
 }
@@ -2279,8 +2281,7 @@ async function syncPull(){
   syncInProgress = true;
   setSyncStatus('Pulling from Google Sheet…', 'var(--slate)');
   try{
-    const res = await fetch(`${syncUrl}?action=read`);
-    const data = await res.json();
+    const data = await safeFetch(`${syncUrl}?action=read`);
     if(data.entries){
       entries = data.entries.map(e=>({
         ...e,
@@ -2299,7 +2300,7 @@ async function syncPull(){
       setSyncStatus('Pull failed: ' + (data.error || 'Unknown error'), 'var(--terracotta)');
     }
   }catch(err){
-    setSyncStatus('Pull failed: ' + err.message, 'var(--terracotta)');
+    setSyncStatus(err.message, 'var(--terracotta)');
   }
   syncInProgress = false;
 }
@@ -2309,15 +2310,14 @@ async function syncTest(){
   if(!url){ setSyncStatus('Enter a URL first.', 'var(--terracotta)'); return; }
   setSyncStatus('Testing connection…', 'var(--slate)');
   try{
-    const res = await fetch(`${url}?action=ping`);
-    const data = await res.json();
+    const data = await safeFetch(`${url}?action=ping`);
     if(data.ok){
       setSyncStatus('✓ Connected! ' + data.message, 'var(--sage)');
     } else {
       setSyncStatus('Connection failed: ' + (data.error || 'No response'), 'var(--terracotta)');
     }
   }catch(err){
-    setSyncStatus('Connection failed: ' + err.message, 'var(--terracotta)');
+    setSyncStatus(err.message, 'var(--terracotta)');
   }
 }
 

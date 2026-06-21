@@ -1079,9 +1079,18 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
             <li>Inside your Google Sheet, click <strong>Extensions</strong> in the top menu</li>
             <li>Click <strong>Apps Script</strong> — a new tab opens with a code editor</li>
             <li>Delete all existing code in the editor (Ctrl+A then Delete)</li>
-            <li>Paste the <strong>WealthMe_AppScript.gs</strong> script (ask for it in the chat if needed)</li>
+            <li>Tap the button below to view the script, then copy and paste it into the editor</li>
             <li>Click the <strong>💾 Save</strong> icon (or Ctrl+S)</li>
           </ol>
+          <div style="margin-top:10px;">
+            <button class="btn btn-secondary btn-block" id="showScriptBtn">Show Script</button>
+          </div>
+          <div id="scriptBlock" style="display:none;margin-top:10px;">
+            <textarea id="gsScriptText" readonly style="width:100%;height:180px;font-family:monospace;font-size:11px;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--slate-light);color:var(--navy);resize:none;"></textarea>
+            <div class="csv-row" style="margin-top:8px;">
+              <button class="btn btn-primary btn-block" id="copyScriptBtn">Copy Script</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2440,6 +2449,157 @@ document.getElementById('helpModalClose').addEventListener('click', ()=>{
 });
 document.getElementById('helpModalOverlay').addEventListener('click', (e)=>{
   if(e.target.id === 'helpModalOverlay') document.getElementById('helpModalOverlay').classList.remove('active');
+});
+
+/* Embedded Apps Script source */
+const GS_SCRIPT = `// ============================================================
+// WEALTH.ME — Google Apps Script Backend v4
+// Uses chunked GET requests to avoid URL length and CORS limits.
+// Instructions:
+//   1. Go to script.google.com → New Project
+//   2. Paste this entire file, replacing any existing code
+//   3. Click Deploy → New Deployment → Web App
+//      - Execute as: Me
+//      - Who has access: Anyone
+//   4. Click Deploy, authorize, and copy the Web App URL
+//   5. Paste that URL into Wealth.Me → Settings → Cloud Sync
+// ============================================================
+
+const SHEET_NAME = 'WealthMe';
+
+function getOrCreateSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.getRange(1, 1, 1, 9).setValues([[
+      'id', 'date', 'category', 'subcategory', 'amount',
+      'status', 'notes', 'type', 'account'
+    ]]);
+    sheet.getRange(1, 1, 1, 9).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+function doGet(e) {
+  try {
+    const action = e.parameter.action;
+
+    if (action === 'ping') {
+      return jsonResponse({ ok: true, message: 'WealthMe sync connected!' });
+    }
+
+    if (action === 'read') {
+      return jsonResponse(readEntries());
+    }
+
+    if (action === 'chunk') {
+      const index = parseInt(e.parameter.index);
+      const total = parseInt(e.parameter.total);
+      const data  = e.parameter.data;
+
+      const props = PropertiesService.getScriptProperties();
+      props.setProperty('chunk_' + index, data);
+
+      let allReceived = true;
+      for (let i = 0; i < total; i++) {
+        if (!props.getProperty('chunk_' + i)) { allReceived = false; break; }
+      }
+
+      if (allReceived) {
+        let payload = '';
+        for (let i = 0; i < total; i++) {
+          payload += props.getProperty('chunk_' + i);
+          props.deleteProperty('chunk_' + i);
+        }
+        const entries = JSON.parse(payload);
+        writeEntries(entries);
+        return jsonResponse({ success: true, count: entries.length, done: true });
+      }
+
+      return jsonResponse({ success: true, received: index + 1, of: total, done: false });
+    }
+
+    return jsonResponse({ error: 'Unknown action: ' + action });
+  } catch (err) {
+    return jsonResponse({ error: err.toString() });
+  }
+}
+
+function readEntries() {
+  const sheet = getOrCreateSheet();
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return { entries: [] };
+
+  const headers = data[0];
+  const entries = data.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => {
+      let value = row[i];
+      if (h === 'date' && value instanceof Date) {
+        value = Utilities.formatDate(
+          value,
+          Session.getScriptTimeZone(),
+          'yyyy-MM-dd'
+        );
+      }
+      if (value !== '') {
+        obj[h] = value;
+      }
+    });
+    if (obj.amount !== undefined) obj.amount = Number(obj.amount);
+    if (obj.id    !== undefined) obj.id     = Number(obj.id);
+    return obj;
+  }).filter(e => e.id);
+
+  return { entries };
+}
+
+function writeEntries(entries) {
+  const sheet = getOrCreateSheet();
+  const headers = ['id','date','category','subcategory','amount','status','notes','type','account'];
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, headers.length).clearContent();
+  if (!entries || entries.length === 0) return;
+
+  const rows = entries.map(e => headers.map(h => (e[h] != null) ? e[h] : ''));
+  sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+}
+
+function jsonResponse(data) {
+  return ContentService
+    .createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+document.getElementById('showScriptBtn').addEventListener('click', ()=>{
+  const block = document.getElementById('scriptBlock');
+  const textarea = document.getElementById('gsScriptText');
+  const btn = document.getElementById('showScriptBtn');
+  const isVisible = block.style.display !== 'none';
+  block.style.display = isVisible ? 'none' : 'block';
+  btn.textContent = isVisible ? 'Show Script' : 'Hide Script';
+  if(!isVisible) textarea.value = GS_SCRIPT;
+});
+
+document.getElementById('copyScriptBtn').addEventListener('click', async ()=>{
+  const textarea = document.getElementById('gsScriptText');
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(textarea.value);
+    } else {
+      document.execCommand('copy');
+    }
+    const btn = document.getElementById('copyScriptBtn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(()=>{ btn.textContent = 'Copy Script'; }, 2000);
+  }catch(err){
+    showToast('Copy failed — text is selected, use Ctrl/Cmd+C');
+  }
 });
 
 document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);

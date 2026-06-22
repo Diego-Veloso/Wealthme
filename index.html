@@ -2463,18 +2463,28 @@ async function syncTest(){
     if(!ping.ok){ setSyncStatus('Ping failed: ' + (ping.error||'No response'), 'var(--terracotta)'); return; }
     setSyncStatus('Ping OK — testing write…', 'var(--slate)');
 
-    // Step 2: try a tiny write (single chunk with 1 test entry)
+    // Step 2: tiny write test
     const testPayload = JSON.stringify([{id:0,date:'2000-01-01',category:'Income',subcategory:'Other Incomes',amount:0,status:'Open',notes:'__sync_test__'}]);
     const sessionId = 'test_' + Date.now().toString(36);
     const writeUrl = `${url}?action=chunk&session=${sessionId}&index=0&total=1&data=${encodeURIComponent(testPayload)}`;
-    const write = await jsonpFetch(writeUrl);
-    if(write.error){ setSyncStatus('Write test failed: ' + write.error, 'var(--terracotta)'); return; }
+    setSyncStatus('Sending test chunk…', 'var(--slate)');
+    let write;
+    try{
+      write = await jsonpFetch(writeUrl);
+      setSyncStatus('Write response: ' + JSON.stringify(write), write.error ? 'var(--terracotta)' : 'var(--sage)');
+    }catch(writeErr){
+      setSyncStatus('Write JSONP error: ' + writeErr.message, 'var(--terracotta)');
+      return;
+    }
+    if(write.error){ return; }
 
-    // Step 3: if write OK, push real data
-    setSyncStatus('Write OK — pushing your data…', 'var(--slate)');
-    saveSyncUrl(url);
-    updateSyncBadge();
-    await syncPush();
+    // Step 3: push real data
+    setTimeout(()=> setSyncStatus('Write OK — pushing your data…', 'var(--slate)'), 2000);
+    setTimeout(async ()=>{
+      saveSyncUrl(url);
+      updateSyncBadge();
+      await syncPush();
+    }, 2500);
   }catch(err){
     setSyncStatus('Test failed: ' + err.message, 'var(--terracotta)');
   }

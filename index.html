@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  const GOOGLE_SYNC_URL =
-"https://script.google.com/macros/s/AKfycbxX8oWUD1jJYw4n4Ugc5zIucr6O7i4d80F46L1R53CbIypwF6mGXIJ2Ut9G0WF-mPTO/exec";
 <meta charset="UTF-8">
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -1311,21 +1309,14 @@ function isBeforeOrInYear(dateStr, refDate){
 
 /* ---------- PERSISTENCE ---------- */
 function saveState(){
-
   invalidateFinancialsCache();
-
   try{
     localStorage.setItem('wealthme_entries', JSON.stringify(entries));
     localStorage.setItem('wealthme_nextid', String(nextId));
     localStorage.setItem('wealthme_settings', JSON.stringify(SETTINGS));
     localStorage.setItem('wealthme_debtaccounts', JSON.stringify(DEBT_ACCOUNTS));
     localStorage.setItem('wealthme_categorymap', JSON.stringify(CATEGORY_MAP));
-  }
-  catch(e){
-    console.error(e);
-  }
-
-  queueGoogleSync();
+  }catch(e){ /* ignore */ }
 }
 function loadState(){
   try{

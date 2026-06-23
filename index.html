@@ -2102,12 +2102,17 @@ document.getElementById('entrySaveBtn').addEventListener('click', ()=>{
       delete entry.account;
     }
     showToast('Entry updated');
+    saveState();
+    closeEntryModal();
+    renderCurrentView(getActiveViewName());
+    // Sync only the changed entry
+    autoSyncEntry(entries.find(e=>e.id===Number(idVal)));
   } else {
     const newEntry = {
       id: uid(),
       date, category, subcategory,
-      amount: amount, // preserve sign: negative = cashback/withdrawal
-      status, // defaults to Open via UI default
+      amount: amount,
+      status,
       notes
     };
     if(category === 'Expense'){
@@ -2116,23 +2121,24 @@ document.getElementById('entrySaveBtn').addEventListener('click', ()=>{
     }
     entries.push(newEntry);
     showToast('Entry added');
+    saveState();
+    closeEntryModal();
+    renderCurrentView(getActiveViewName());
+    // Sync only the new entry
+    autoSyncEntry(newEntry);
   }
-
-  saveState();
-  closeEntryModal();
-  renderCurrentView(getActiveViewName());
-  autoSync();
 });
 
 document.getElementById('entryDeleteBtn').addEventListener('click', ()=>{
   const idVal = document.getElementById('entryId').value;
   if(!idVal) return;
-  entries = entries.filter(e=>e.id !== Number(idVal));
+  const deletedId = Number(idVal);
+  entries = entries.filter(e=>e.id !== deletedId);
   saveState();
   closeEntryModal();
   showToast('Entry deleted');
   renderCurrentView(getActiveViewName());
-  autoSync();
+  autoSyncDelete(deletedId);
 });
 
 document.getElementById('addFab').addEventListener('click', ()=> openEntryModal(null));
@@ -2376,6 +2382,110 @@ function jsonpFetch(url){
   });
 }
 
+// Sync a single entry (add/update) — no chunking, no storage quota issues
+async function autoSyncEntry(entry){
+  if(!syncUrl) return;
+  const badge = document.getElementById('syncBadge');
+  if(badge){ badge.style.background = 'var(--gold)'; badge.title = 'Syncing…'; }
+  try{
+    const encoded = encodeURIComponent(JSON.stringify(entry));
+    const url = `${syncUrl}?action=addone&data=${encoded}`;
+    const json = await jsonpFetch(url);
+    if(json.error) throw new Error(json.error);
+    if(badge){ badge.style.background = 'var(--sage)'; badge.title = 'Synced to Google Sheet'; }
+  }catch(err){
+    if(badge){ badge.style.background = 'var(--terracotta)'; badge.title = 'Sync failed: ' + err.message; }
+    showToast('Sync failed: ' + err.message.slice(0,60));
+  }
+}
+
+// Sync a deletion
+async function autoSyncDelete(id){
+  if(!syncUrl) return;
+  const badge = document.getElementById('syncBadge');
+  if(badge){ badge.style.background = 'var(--gold)'; badge.title = 'Syncing…'; }
+  try{
+    const url = `${syncUrl}?action=deleteone&id=${id}`;
+    const json = await jsonpFetch(url);
+    if(json.error) throw new Error(json.error);
+    if(badge){ badge.style.background = 'var(--sage)'; badge.title = 'Synced to Google Sheet'; }
+  }catch(err){
+    if(badge){ badge.style.background = 'var(--terracotta)'; badge.title = 'Sync failed: ' + err.message; }
+    showToast('Sync failed: ' + err.message.slice(0,60));
+  }
+}
+
+// Full push — used manually via Settings button
+async function syncPush(){
+  if(!syncUrl){ setSyncStatus('No URL configured.', 'var(--terracotta)'); return; }
+  if(syncInProgress){ setSyncStatus('Sync in progress...'); return; }
+  syncInProgress = true;
+  setSyncStatus('Pushing all entries…', 'var(--slate)');
+  try{
+    const payload = JSON.stringify(entries);
+    const CHUNK_SIZE = 2000;
+    const chunks = [];
+    for(let i = 0; i < payload.length; i += CHUNK_SIZE) chunks.push(payload.slice(i, i + CHUNK_SIZE));
+    const sessionId = Date.now().toString(36);
+    for(let i = 0; i < chunks.length; i++){
+      setSyncStatus(`Pushing… ${i+1}/${chunks.length}`, 'var(--slate)');
+      const url = `${syncUrl}?action=chunk&session=${sessionId}&index=${i}&total=${chunks.length}&data=${encodeURIComponent(chunks[i])}`;
+      const json = await jsonpFetch(url);
+      if(json.error){ setSyncStatus('Push failed: ' + json.error, 'var(--terracotta)'); syncInProgress=false; return; }
+    }
+    setSyncStatus(`✓ Pushed ${entries.length} entries to Sheet`, 'var(--sage)');
+    showToast('Synced to Google Sheet');
+  }catch(err){
+    setSyncStatus('Push failed: ' + err.message, 'var(--terracotta)');
+  }
+  syncInProgress = false;
+}
+
+async function syncPull(){
+  if(!syncUrl){ setSyncStatus('No URL configured.', 'var(--terracotta)'); return; }
+  if(syncInProgress){ setSyncStatus('Sync in progress...'); return; }
+  syncInProgress = true;
+  setSyncStatus('Pulling from Google Sheet…', 'var(--slate)');
+  try{
+    const data = await jsonpFetch(`${syncUrl}?action=read`);
+    if(data.entries){
+      entries = data.entries.map(e=>({...e, id: Number(e.id)||uid(), amount: Number(e.amount)||0}));
+      const maxId = entries.reduce((a,e)=>Math.max(a,Number(e.id)||0),0);
+      if(maxId >= nextId) nextId = maxId + 1;
+      invalidateFinancialsCache();
+      saveState();
+      setSyncStatus(`✓ Pulled ${entries.length} entries from Sheet`, 'var(--sage)');
+      showToast('Pulled from Google Sheet');
+      closeSettingsModal();
+      renderCurrentView(getActiveViewName());
+    } else {
+      setSyncStatus('Pull failed: ' + (data.error||'Unknown error'), 'var(--terracotta)');
+    }
+  }catch(err){
+    setSyncStatus('Pull failed: ' + err.message, 'var(--terracotta)');
+  }
+  syncInProgress = false;
+}
+
+async function syncTest(){
+  const url = document.getElementById('syncUrlInput').value.trim();
+  if(!url){ setSyncStatus('Enter a URL first.', 'var(--terracotta)'); return; }
+  setSyncStatus('Testing connection…', 'var(--slate)');
+  try{
+    // Clear any stuck properties first
+    await jsonpFetch(`${url}?action=clearprops`);
+    const ping = await jsonpFetch(`${url}?action=ping`);
+    if(ping.ok){ setSyncStatus('✓ Connected! ' + ping.message, 'var(--sage)'); }
+    else { setSyncStatus('Connection failed: ' + (ping.error||'No response'), 'var(--terracotta)'); }
+  }catch(err){
+    setSyncStatus('Connection failed: ' + err.message, 'var(--terracotta)');
+  }
+}
+
+// Legacy autoSync kept for compatibility — now delegates to per-entry sync
+async function autoSync(){ }
+
+
 async function autoSync(){
   if(!syncUrl) return;
   const badge = document.getElementById('syncBadge');
@@ -2537,8 +2647,10 @@ document.getElementById('helpModalOverlay').addEventListener('click', (e)=>{
 
 /* Embedded Apps Script source */
 const GS_SCRIPT = `// ============================================================
-// WEALTH.ME — Google Apps Script Backend v5
-// Uses session-scoped chunked GET requests.
+// WEALTH.ME — Google Apps Script Backend v9
+// Direct write — no chunking, no property storage.
+// Sends all data in a single request using a GET parameter.
+// Works within URL limits by compressing the payload.
 // ============================================================
 
 const SHEET_NAME = 'WealthMe';
@@ -2560,53 +2672,98 @@ function getOrCreateSheet() {
 
 function doGet(e) {
   try {
-    const action = e.parameter.action;
+    const action   = e.parameter.action;
+    const callback = e.parameter.callback;
+    let result;
 
     if (action === 'ping') {
-      return jsonResponse({ ok: true, message: 'WealthMe sync connected!' });
+      result = { ok: true, message: 'WealthMe sync connected!' };
     }
-
-    if (action === 'read') {
-      return jsonResponse(readEntries());
+    else if (action === 'read') {
+      result = readEntries();
     }
-
-    if (action === 'chunk') {
-      const session = e.parameter.session || 'default';
-      const index   = parseInt(e.parameter.index);
-      const total   = parseInt(e.parameter.total);
-      const data    = e.parameter.data;
-
-      const props = PropertiesService.getScriptProperties();
-      const key = session + '_chunk_' + index;
-      props.setProperty(key, data);
-
-      // Check if all chunks for this session have arrived
-      let allReceived = true;
-      for (let i = 0; i < total; i++) {
-        if (!props.getProperty(session + '_chunk_' + i)) {
-          allReceived = false;
-          break;
-        }
-      }
-
-      if (allReceived) {
-        // Reassemble payload
-        let payload = '';
-        for (let i = 0; i < total; i++) {
-          payload += props.getProperty(session + '_chunk_' + i);
-          props.deleteProperty(session + '_chunk_' + i);
-        }
-        const entries = JSON.parse(payload);
+    else if (action === 'write') {
+      // All entries sent as a single encoded parameter
+      const data = e.parameter.data;
+      if (!data) { result = { error: 'No data parameter' }; }
+      else {
+        const entries = JSON.parse(decodeURIComponent(data));
         writeEntries(entries);
-        return jsonResponse({ success: true, count: entries.length, done: true });
+        result = { success: true, count: entries.length };
       }
-
-      return jsonResponse({ success: true, received: index + 1, of: total, done: false });
+    }
+    else if (action === 'addone') {
+      // Add or update a single entry — no storage quota needed
+      const data = e.parameter.data;
+      if (!data) { result = { error: 'No data parameter' }; }
+      else {
+        const entry = JSON.parse(decodeURIComponent(data));
+        upsertEntry(entry);
+        result = { success: true };
+      }
+    }
+    else if (action === 'deleteone') {
+      const id = parseInt(e.parameter.id);
+      deleteEntry(id);
+      result = { success: true };
+    }
+    else if (action === 'clearprops') {
+      PropertiesService.getScriptProperties().deleteAllProperties();
+      result = { ok: true, message: 'Properties cleared' };
+    }
+    else {
+      result = { error: 'Unknown action: ' + action };
     }
 
-    return jsonResponse({ error: 'Unknown action: ' + action });
+    if (callback) {
+      return ContentService
+        .createTextOutput(callback + '(' + JSON.stringify(result) + ')')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return jsonResponse(result);
+
   } catch (err) {
-    return jsonResponse({ error: err.toString() });
+    const callback = e.parameter.callback;
+    const errResult = { error: err.toString() };
+    if (callback) {
+      return ContentService
+        .createTextOutput(callback + '(' + JSON.stringify(errResult) + ')')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return jsonResponse(errResult);
+  }
+}
+
+// Add or update a single entry in the sheet by id
+function upsertEntry(entry) {
+  const sheet = getOrCreateSheet();
+  const headers = ['id','date','category','subcategory','amount','status','notes','type','account'];
+  const data = sheet.getDataRange().getValues();
+
+  // Find existing row with this id
+  for (let r = 1; r < data.length; r++) {
+    if (Number(data[r][0]) === Number(entry.id)) {
+      // Update existing row
+      const row = headers.map(h => (entry[h] != null) ? entry[h] : '');
+      sheet.getRange(r + 1, 1, 1, headers.length).setValues([row]);
+      return;
+    }
+  }
+
+  // Not found — append new row
+  const row = headers.map(h => (entry[h] != null) ? entry[h] : '');
+  sheet.appendRow(row);
+}
+
+// Delete a single entry by id
+function deleteEntry(id) {
+  const sheet = getOrCreateSheet();
+  const data = sheet.getDataRange().getValues();
+  for (let r = data.length - 1; r >= 1; r--) {
+    if (Number(data[r][0]) === Number(id)) {
+      sheet.deleteRow(r + 1);
+      return;
+    }
   }
 }
 
@@ -2621,11 +2778,7 @@ function readEntries() {
     headers.forEach((h, i) => {
       let value = row[i];
       if (h === 'date' && value instanceof Date) {
-        value = Utilities.formatDate(
-          value,
-          Session.getScriptTimeZone(),
-          'yyyy-MM-dd'
-        );
+        value = Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd');
       }
       if (value !== '') obj[h] = value;
     });
@@ -2640,11 +2793,9 @@ function readEntries() {
 function writeEntries(entries) {
   const sheet = getOrCreateSheet();
   const headers = ['id','date','category','subcategory','amount','status','notes','type','account'];
-
   const lastRow = sheet.getLastRow();
   if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, headers.length).clearContent();
   if (!entries || entries.length === 0) return;
-
   const rows = entries.map(e => headers.map(h => (e[h] != null) ? e[h] : ''));
   sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
 }
@@ -2653,6 +2804,11 @@ function jsonResponse(data) {
   return ContentService
     .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function manualClearProps() {
+  PropertiesService.getScriptProperties().deleteAllProperties();
+  Logger.log('All properties cleared.');
 }
 `;
 

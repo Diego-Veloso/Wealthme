@@ -682,7 +682,7 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
       <div class="segmented" id="detailPeriodSeg" style="margin-bottom:8px;">
         <button data-period="all">All</button>
         <button class="active" data-period="thismonth">This Month</button>
-        <button data-period="lastmonth">Last Month</button>
+        <button data-period="nextmonth">Next Month</button>
         <button data-period="thisyear">This Year</button>
         <button data-period="custom">Custom</button>
       </div>
@@ -714,7 +714,7 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
       <div class="segmented" id="txPeriodSeg" style="margin-bottom:8px;">
         <button data-period="all">All</button>
         <button class="active" data-period="thismonth">This Month</button>
-        <button data-period="lastmonth">Last Month</button>
+        <button data-period="nextmonth">Next Month</button>
         <button data-period="thisyear">This Year</button>
         <button data-period="custom">Custom</button>
       </div>
@@ -1239,7 +1239,7 @@ let donutCategory = "Expense";
 let txFilter = "Open";
 let txSearchQuery = "";
 let txSortAsc = true; // true = oldest first, false = newest first
-let txPeriod = "thismonth";   // all | thismonth | lastmonth | thisyear | custom
+let txPeriod = "thismonth";   // all | thismonth | nextmonth | thisyear | custom
 let txDateFrom = "";    // YYYY-MM-DD, used when txPeriod === "custom"
 let txDateTo = "";      // YYYY-MM-DD, used when txPeriod === "custom"
 let debtFilter = "Open";
@@ -3258,9 +3258,9 @@ function renderTransactions(){
     if(txPeriod === 'thismonth'){
       from = new Date(now.getFullYear(), now.getMonth(), 1);
       to   = new Date(now.getFullYear(), now.getMonth()+1, 0);
-    } else if(txPeriod === 'lastmonth'){
-      from = new Date(now.getFullYear(), now.getMonth()-1, 1);
-      to   = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else if(txPeriod === 'nextmonth'){
+      from = new Date(now.getFullYear(), now.getMonth()+1, 1);
+      to   = new Date(now.getFullYear(), now.getMonth()+2, 0);
     } else if(txPeriod === 'thisyear'){
       from = new Date(now.getFullYear(), 0, 1);
       to   = new Date(now.getFullYear(), 11, 31);
@@ -3354,9 +3354,9 @@ function renderDetail(){
     if(detailPeriod === 'thismonth'){
       from = new Date(now.getFullYear(), now.getMonth(), 1);
       to   = new Date(now.getFullYear(), now.getMonth()+1, 0);
-    } else if(detailPeriod === 'lastmonth'){
-      from = new Date(now.getFullYear(), now.getMonth()-1, 1);
-      to   = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else if(detailPeriod === 'nextmonth'){
+      from = new Date(now.getFullYear(), now.getMonth()+1, 1);
+      to   = new Date(now.getFullYear(), now.getMonth()+2, 0);
     } else if(detailPeriod === 'thisyear'){
       from = new Date(now.getFullYear(), 0, 1);
       to   = new Date(now.getFullYear(), 11, 31);

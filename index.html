@@ -1747,12 +1747,16 @@ function renderMoneyAllTimeBreakdown(){
       <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);flex:1;">Subcategory</span>
       <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);min-width:80px;text-align:right;">Invested</span>
       <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);min-width:80px;text-align:right;">Capital</span>
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);min-width:55px;text-align:right;">Return</span>
     </div>`;
 
   const html = rows.map(r => {
     const alloc = grandInvested !== 0 ? (r.invested / grandInvested * 100).toFixed(1) : '0.0';
     const barWidth = grandInvested !== 0 ? Math.max(0, Math.min(100, (r.invested / grandInvested * 100))) : 0;
     const capColor = r.capital > 0 ? 'color:#3E7C59;' : r.capital < 0 ? 'color:#C1583F;' : 'color:var(--slate);';
+    const returnPct = r.invested !== 0 ? (r.capital / r.invested * 100) : null;
+    const returnStr = returnPct !== null ? (returnPct >= 0 ? '+' : '') + returnPct.toFixed(1) + '%' : '—';
+    const returnColor = returnPct === null ? 'color:var(--slate);' : returnPct > 0 ? 'color:#3E7C59;' : returnPct < 0 ? 'color:#C1583F;' : 'color:var(--slate);';
     return `
       <div class="breakdown-row" style="align-items:flex-start;">
         <div class="breakdown-left" style="flex:1;min-width:0;">
@@ -1771,11 +1775,17 @@ function renderMoneyAllTimeBreakdown(){
         <div style="min-width:80px;text-align:right;flex-shrink:0;">
           <div class="breakdown-amt" style="${capColor}">${r.capital !== 0 ? (r.capital > 0 ? '+' : '') + fmtMoney(r.capital) : '—'}</div>
         </div>
+        <div style="min-width:55px;text-align:right;flex-shrink:0;">
+          <div class="breakdown-amt" style="${returnColor};font-size:13px;">${returnStr}</div>
+        </div>
       </div>`;
   }).join('');
 
   // Total row
   const capTotalColor = grandCapital > 0 ? 'color:#3E7C59;' : grandCapital < 0 ? 'color:#C1583F;' : 'color:var(--slate);';
+  const totalReturnPct = grandInvested !== 0 ? (grandCapital / grandInvested * 100) : null;
+  const totalReturnStr = totalReturnPct !== null ? (totalReturnPct >= 0 ? '+' : '') + totalReturnPct.toFixed(1) + '%' : '—';
+  const totalReturnColor = totalReturnPct === null ? 'color:var(--slate);' : totalReturnPct > 0 ? 'color:#3E7C59;' : totalReturnPct < 0 ? 'color:#C1583F;' : 'color:var(--slate);';
   const totalRow = `
     <div class="breakdown-row" style="border-top:2px solid var(--line);margin-top:4px;padding-top:10px;">
       <div class="breakdown-left" style="flex:1;">
@@ -1787,6 +1797,9 @@ function renderMoneyAllTimeBreakdown(){
       </div>
       <div style="min-width:80px;text-align:right;flex-shrink:0;">
         <div class="breakdown-amt" style="${capTotalColor}">${grandCapital !== 0 ? (grandCapital > 0 ? '+' : '') + fmtMoney(grandCapital) : '—'}</div>
+      </div>
+      <div style="min-width:55px;text-align:right;flex-shrink:0;">
+        <div class="breakdown-amt" style="${totalReturnColor};font-size:13px;">${totalReturnStr}</div>
       </div>
     </div>`;
 

@@ -696,16 +696,15 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
           <input type="date" id="detailDateTo">
         </div>
       </div>
-      <div id="detailLists"></div>
-
       <!-- Expense/Gross Income trendline chart -->
-      <div class="card" id="detailTrendCard" style="display:none;">
+      <div class="card" id="detailTrendCard">
         <div class="card-title">
-          <span id="detailTrendTitle">Expense Trend</span>
-          <span class="muted" style="font-size:12px;font-family:'Inter',sans-serif;font-weight:500;">% of Gross Income · 13 months</span>
+          <span id="detailTrendTitle">Trend</span>
         </div>
         <div class="chart-wrap"><canvas id="detailTrendChart"></canvas></div>
       </div>
+
+      <div id="detailLists"></div>
     </section>
 
     <!-- ============ TRANSACTIONS VIEW ============ -->
@@ -3435,7 +3434,8 @@ function renderDetail(){
 
   document.getElementById('detailLists').innerHTML = html;
   attachEntryRowHandlers(document.getElementById('detailLists'));
-  renderDetailTrendChart();
+  // Use rAF to ensure the canvas is laid out before Chart.js measures dimensions
+  requestAnimationFrame(() => renderDetailTrendChart());
 }
 
 function renderDetailTrendChart(){

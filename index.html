@@ -580,6 +580,34 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
 </style>
 </head>
 <body>
+<!-- ===== Password Lock Screen ===== -->
+<div id="lockScreen" style="
+  position:fixed;inset:0;background:#0F1B2D;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:999;padding:32px;
+">
+  <div style="width:60px;height:60px;border-radius:16px;background:#1a2d45;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F7F4EF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+  </div>
+  <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:600;color:#F7F4EF;margin-bottom:6px;">Wealth.Me</div>
+  <div style="font-size:13px;color:#8fa3b0;margin-bottom:32px;">Enter your password to continue</div>
+  <input type="password" id="lockInput" placeholder="Password"
+    style="width:100%;max-width:320px;padding:14px 16px;border-radius:12px;border:1px solid #2a3d54;
+    background:#1a2d45;color:#F7F4EF;font-size:16px;font-family:'Inter',sans-serif;
+    outline:none;text-align:center;margin-bottom:12px;"
+    autofocus>
+  <div id="lockError" style="color:#C1583F;font-size:13px;min-height:20px;margin-bottom:12px;"></div>
+  <button id="lockBtn" style="
+    width:100%;max-width:320px;padding:14px;border-radius:12px;border:none;
+    background:#F7F4EF;color:#0F1B2D;font-size:15px;font-weight:700;
+    font-family:'Inter',sans-serif;cursor:pointer;">
+    Unlock
+  </button>
+  <div style="margin-top:24px;font-size:11px;color:#5C6B7A;text-align:center;">
+    To change the password, open the app's<br>Settings page after unlocking.
+  </div>
+</div>
+
 <div id="app">
 
   <!-- ===== Top Bar ===== -->
@@ -980,6 +1008,17 @@ table.breakdown-table tr:last-child td{border-bottom:none;font-weight:700;}
         <button class="btn btn-primary" id="importCsvBtn" style="flex:1;">Import CSV</button>
       </div>
       <input type="file" id="csvFileInput" class="hidden-input" accept=".csv">
+
+      <div class="section-title">Password</div>
+      <div class="field">
+        <label>New Password</label>
+        <input type="password" id="newPasswordInput" placeholder="Enter new password">
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input type="password" id="confirmPasswordInput" placeholder="Confirm new password">
+      </div>
+      <button class="btn btn-secondary btn-block" id="changePasswordBtn">Change Password</button>
 
       <div class="section-title">Reset</div>
       <div class="csv-row">
@@ -3176,7 +3215,65 @@ function init(){
   if(badge && syncUrl) badge.style.background = 'var(--slate)';
 }
 
-init();
+/* =========================================================
+   PASSWORD LOCK SCREEN
+   ========================================================= */
+const DEFAULT_PASSWORD = 'wealthme';
+
+function getStoredPassword(){
+  try{ return localStorage.getItem('wealthme_password') || DEFAULT_PASSWORD; }catch(e){ return DEFAULT_PASSWORD; }
+}
+function savePassword(pw){
+  try{ localStorage.setItem('wealthme_password', pw); }catch(e){}
+}
+function isUnlocked(){
+  try{ return sessionStorage.getItem('wealthme_unlocked') === '1'; }catch(e){ return false; }
+}
+function setUnlocked(){
+  try{ sessionStorage.setItem('wealthme_unlocked', '1'); }catch(e){}
+}
+
+function attemptUnlock(){
+  const input = document.getElementById('lockInput').value;
+  const error = document.getElementById('lockError');
+  if(input === getStoredPassword()){
+    setUnlocked();
+    document.getElementById('lockScreen').style.display = 'none';
+    init();
+  } else {
+    error.textContent = 'Incorrect password. Please try again.';
+    document.getElementById('lockInput').value = '';
+    document.getElementById('lockInput').focus();
+  }
+}
+
+document.getElementById('lockBtn').addEventListener('click', attemptUnlock);
+document.getElementById('lockInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') attemptUnlock();
+  document.getElementById('lockError').textContent = '';
+});
+
+document.getElementById('changePasswordBtn').addEventListener('click', ()=>{
+  const newPw  = document.getElementById('newPasswordInput').value.trim();
+  const confPw = document.getElementById('confirmPasswordInput').value.trim();
+  if(!newPw){ showToast('Please enter a new password'); return; }
+  if(newPw !== confPw){ showToast('Passwords do not match'); return; }
+  savePassword(newPw);
+  document.getElementById('newPasswordInput').value = '';
+  document.getElementById('confirmPasswordInput').value = '';
+  showToast('Password updated');
+  closeSettingsModal();
+});
+
+// Show lock screen or go straight to app
+if(isUnlocked()){
+  document.getElementById('lockScreen').style.display = 'none';
+  init();
+} else {
+  // Don't call init() yet — called after successful unlock
+  document.getElementById('lockInput').focus();
+}
+
 
 function renderDebts(){
   const types = debtTypeFilter === 'All' ? DEBT_TYPES : [debtTypeFilter];
